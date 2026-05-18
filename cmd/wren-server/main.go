@@ -3,9 +3,44 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/wren-engine/wren/internal/config"
+	"github.com/wren-engine/wren/internal/connector/duckdb"
+	"github.com/wren-engine/wren/internal/converter"
+	"github.com/wren-engine/wren/internal/server"
+	"github.com/wren-engine/wren/internal/service"
 )
 
 func main() {
-	fmt.Println("wren-engine starting...")
-	os.Exit(0)
+	configMgr := config.NewConfigManager()
+	configMgr.LoadFromEnv()
+
+	cfg := configMgr.Get()
+
+	// Create connectors based on config
+	var metadata service.Metadata = duckdb.NewConnector()
+	var sqlConverter converter.SqlConverter = &converter.DuckDBSqlConverter{}
+
+	previewService := service.NewPreviewService(metadata, sqlConverter, configMgr)
+	validationService := service.NewValidationService()
+
+	srv := server.NewServer(fmt.Sprintf(":%d", cfg.Server.Port))
+
+	mdlHandler := server.NewMDLHandler(previewService, validationService)
+	mdlHandler.RegisterRoutes(srv.Router())
+
+	analysisHandler := server.NewAnalysisHandler()
+	analysisHandler.RegisterRoutes(srv.Router())
+
+	duckdbHandler := server.NewDuckDBHandler(metadata)
+	duckdbHandler.RegisterRoutes(srv.Router())
+
+	configHandler := server.NewConfigHandler(configMgr)
+	configHandler.RegisterRoutes(srv.Router())
+
+	fmt.Printf("wren-engine starting on port %d...\n", cfg.Server.Port)
+	if err := srv.Start(); err != nil {
+		fmt.Fprintf(os.Stderr, "server error: %v\n", err)
+		os.Exit(1)
+	}
 }

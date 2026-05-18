@@ -8,7 +8,12 @@ import (
 )
 
 // AllRules is the list of all rewrite rules applied sequentially.
-var AllRules = []WrenRule{}
+var AllRules = []WrenRule{
+	&GenerateViewRewrite{},
+	&MetricRollupRewrite{},
+	&WrenSqlRewrite{},
+	&EnumRewrite{},
+}
 
 // Rewrite applies all rewrite rules to the SQL.
 func Rewrite(sql string, ctx *analyzer.SessionContext, analyzedMDL *mdl.AnalyzedMDL) (string, error) {
