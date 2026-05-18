@@ -13,7 +13,7 @@ func ParseSQL(sql string) (ast.Statement, error) {
 	lexer := generated.NewSqlBaseLexer(antlr.NewInputStream(sql))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := generated.NewSqlBaseParser(stream)
-	tree := p.Statements()
+	tree := p.SingleStatement()
 
 	builder := &AstBuilder{}
 	result := builder.Visit(tree)
