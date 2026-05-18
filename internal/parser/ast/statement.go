@@ -25,7 +25,7 @@ func (q *Query) GetChildren() []Node {
 		children = append(children, q.Body)
 	}
 	for _, si := range q.OrderBy {
-		children = append(children, si)
+		children = append(children, &si)
 	}
 	if q.Limit != nil {
 		children = append(children, q.Limit)
@@ -69,7 +69,7 @@ func (qs *QuerySpecification) GetChildren() []Node {
 		children = append(children, qs.GroupBy)
 	}
 	for _, si := range qs.OrderBy {
-		children = append(children, si)
+		children = append(children, &si)
 	}
 	if qs.Limit != nil {
 		children = append(children, qs.Limit)
