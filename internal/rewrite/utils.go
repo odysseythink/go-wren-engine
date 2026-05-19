@@ -7,6 +7,7 @@ import (
 
 	"github.com/wren-engine/wren/internal/parser"
 	"github.com/wren-engine/wren/internal/parser/ast"
+	"github.com/wren-engine/wren/internal/parser/formatter"
 )
 
 // parseSQL parses a statement. Mirrors Java Utils.parseSql.
@@ -51,6 +52,22 @@ func contains(s []string, v string) bool {
 		}
 	}
 	return false
+}
+
+// qualifiedConditionString parses a relationship condition and delimits all
+// identifiers. Mirrors Java Relationship.qualifiedCondition.
+func qualifiedConditionString(condition string) (string, error) {
+	expr, err := parseExpression(condition)
+	if err != nil {
+		return "", fmt.Errorf("parse condition %q: %w", condition, err)
+	}
+	rewritten := RewriteNode(expr, func(n ast.Node) (ast.Node, bool) {
+		if id, ok := n.(*ast.Identifier); ok && !id.Delimited {
+			return &ast.Identifier{Value: id.Value, Delimited: true}, true
+		}
+		return nil, false
+	}).(ast.Expression)
+	return formatter.FormatExpression(rewritten), nil
 }
 
 // hasPrefixParts reports whether qn starts with the given prefix parts.

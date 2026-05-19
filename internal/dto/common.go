@@ -21,6 +21,17 @@ type TableReference struct {
 	Table   string `json:"table"`
 }
 
+// ToQualifiedName returns a qualified name string for the table reference.
+func (t *TableReference) ToQualifiedName() string {
+	if t.Catalog != "" && t.Schema != "" {
+		return t.Catalog + "." + t.Schema + "." + t.Table
+	}
+	if t.Schema != "" {
+		return t.Schema + "." + t.Table
+	}
+	return t.Table
+}
+
 // CacheInfo is implemented by objects that support caching.
 type CacheInfo interface {
 	IsCached() bool

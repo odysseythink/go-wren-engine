@@ -14,6 +14,11 @@ func formatExpression(expr ast.Expression, dialect Dialect) string {
 	return (&exprFormatter{dialect: dialect}).process(expr)
 }
 
+// FormatExpression renders an expression to SQL text using the standard dialect.
+func FormatExpression(expr ast.Expression) string {
+	return formatExpression(expr, DialectStandard)
+}
+
 // exprFormatter mirrors trino ExpressionFormatter.Formatter
 // (an AstVisitor<String, Void>).
 type exprFormatter struct {
