@@ -1,9 +1,15 @@
 package analyzer
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/wren-engine/wren/internal/dto"
+	"github.com/wren-engine/wren/internal/mdl"
 	"github.com/wren-engine/wren/internal/parser/ast"
+
+	base "github.com/wren-engine/wren/internal/analyzer"
 )
 
 // tableNameToQualifiedName converts a CatalogSchemaTableName to a QualifiedName.
@@ -52,4 +58,80 @@ func qualifiedNameSuffix(qn *ast.QualifiedName) string {
 		return ""
 	}
 	return qn.Parts[len(qn.Parts)-1]
+}
+
+// qualifiedNameOfExpression extracts a QualifiedName from an expression chain.
+// Mirrors trino QueryUtil.getQualifiedName.
+func qualifiedNameOfExpression(expr ast.Expression) *ast.QualifiedName {
+	return ast.GetQualifiedName(expr)
+}
+
+func errTooManyDots(name ast.QualifiedName) error {
+	return fmt.Errorf("too many dots in name: %s", name.String())
+}
+
+// toCatalogSchemaTableName resolves a (≤3-part) QualifiedName to a CSTN,
+// filling missing parts from the session. Mirrors Utils.toCatalogSchemaTableName.
+func toCatalogSchemaTableName(ctx *base.SessionContext, name ast.QualifiedName) (CatalogSchemaTableName, error) {
+	parts := name.Parts
+	if len(parts) > 3 {
+		return CatalogSchemaTableName{}, errTooManyDots(name)
+	}
+	// reversed: parts[last] is the object name
+	obj := parts[len(parts)-1]
+	schema := ctx.Schema
+	if len(parts) > 1 {
+		schema = parts[len(parts)-2]
+	}
+	catalog := ctx.Catalog
+	if len(parts) > 2 {
+		catalog = parts[len(parts)-3]
+	}
+	return CatalogSchemaTableName{Catalog: catalog, Schema: schema, Table: obj}, nil
+}
+
+// sortedModels returns models sorted by name.
+func sortedModels(wrenMDL *mdl.WrenMDL) []*dto.Model {
+	models := wrenMDL.ListModels()
+	sort.Slice(models, func(i, j int) bool { return models[i].Name < models[j].Name })
+	return models
+}
+
+// usedContains reports whether the used relations contain the given model name.
+func usedContains(used []Relation, modelName string) bool {
+	for _, r := range used {
+		if r.Name == modelName {
+			return true
+		}
+	}
+	return false
+}
+
+// toField creates a Field for a model column. Mirrors Utils.toField.
+func toField(wrenMDL *mdl.WrenMDL, modelName string, column *dto.Column, used []Relation) *Field {
+	name := column.Name
+	return &Field{
+		tableName:         CatalogSchemaTableName{Catalog: wrenMDL.Catalog(), Schema: wrenMDL.Schema(), Table: modelName},
+		columnName:        name,
+		name:              &name,
+		sourceDatasetName: &modelName,
+		sourceColumn:      column,
+	}
+}
+
+// AnalyzeFrom builds a Scope for a FROM relation. Mirrors Utils.analyzeFrom.
+func AnalyzeFrom(wrenMDL *mdl.WrenMDL, ctx *base.SessionContext, node ast.Relation, parent *Scope) *Scope {
+	scopeAnalysis := AnalyzeScope(wrenMDL, node, ctx)
+	used := scopeAnalysis.UsedWrenObjects()
+	var fields []*Field
+	for _, model := range sortedModels(wrenMDL) {
+		if !usedContains(used, model.Name) {
+			continue
+		}
+		for i := range model.Columns {
+			fields = append(fields, toField(wrenMDL, model.Name, &model.Columns[i], used))
+		}
+	}
+	// metrics: P3a语料无metric引用，保留对齐Java但暂不遍历
+	return ScopeBuilderWithParent(parent).RelationType(NewRelationType(fields)).Build()
 }
