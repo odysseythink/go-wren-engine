@@ -17,20 +17,23 @@ type QueryDescriptor interface {
 }
 
 // QueryDescriptorOf builds a descriptor for the named object.
-// Mirrors QueryDescriptor.of (P3a: models only).
+// Mirrors Java QueryDescriptor.of.
 func QueryDescriptorOf(name string, analyzedMDL *mdl.AnalyzedMDL, ctx *base.SessionContext) (QueryDescriptor, error) {
 	wrenMDL := analyzedMDL.WrenMDL()
 	if model, ok := wrenMDL.GetModel(name); ok {
 		return relationInfoOfModel(model, wrenMDL)
 	}
-	if _, ok := wrenMDL.GetMetric(name); ok {
-		return nil, fmt.Errorf("metric %q requires P3b", name)
+	if metric, ok := wrenMDL.GetMetric(name); ok {
+		return relationInfoOfMetric(metric, wrenMDL)
 	}
-	if _, ok := wrenMDL.GetCumulativeMetric(name); ok {
-		return nil, fmt.Errorf("cumulative metric %q requires P3b", name)
+	if cm, ok := wrenMDL.GetCumulativeMetric(name); ok {
+		return cumulativeMetricInfoGet(cm, wrenMDL)
 	}
 	if _, ok := wrenMDL.GetView(name); ok {
 		return nil, fmt.Errorf("view %q requires P3c", name)
+	}
+	if name == dateSpineName {
+		return dateSpineInfoGet(wrenMDL.GetDateSpine())
 	}
 	return nil, fmt.Errorf("%s not found in wren mdl", name)
 }
