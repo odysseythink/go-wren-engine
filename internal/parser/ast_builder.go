@@ -149,41 +149,40 @@ func (b *AstBuilder) VisitQuery(ctx *generated.QueryContext) interface{} {
 	if ctx.With() != nil {
 		query.With = b.visit(ctx.With()).(*ast.With)
 	}
-	body := b.visitStatement(ctx.QueryNoWith())
-	if qs, ok := body.(*ast.QuerySpecification); ok {
-		query.Body = qs
-		query.OrderBy = qs.OrderBy
-		query.Limit = qs.Limit
-		query.Offset = qs.Offset
-		qs.OrderBy = nil
-		qs.Limit = nil
-		qs.Offset = nil
-	} else {
-		query.Body = body.(ast.QueryBody)
-	}
+	inner := b.visitStatement(ctx.QueryNoWith()).(*ast.Query)
+	query.Body = inner.Body
+	query.OrderBy = inner.OrderBy
+	query.Limit = inner.Limit
+	query.Offset = inner.Offset
 	return query
 }
 
 func (b *AstBuilder) VisitQueryNoWith(ctx *generated.QueryNoWithContext) interface{} {
-	qs := b.visitStatement(ctx.QueryTerm()).(*ast.QuerySpecification)
+	query := &ast.Query{}
+	body := b.visitStatement(ctx.QueryTerm())
+	if qs, ok := body.(*ast.QuerySpecification); ok {
+		query.Body = qs
+	} else {
+		query.Body = body.(ast.QueryBody)
+	}
 	for _, si := range ctx.AllSortItem() {
-		qs.OrderBy = append(qs.OrderBy, *b.visitSortItem(si))
+		query.OrderBy = append(query.OrderBy, *b.visitSortItem(si))
 	}
 	if ctx.LIMIT() != nil {
 		if ctx.LimitRowCount() != nil && ctx.LimitRowCount().RowCount() != nil {
-			qs.Limit = b.visitExpression(ctx.LimitRowCount().RowCount())
+			query.Limit = b.visitExpression(ctx.LimitRowCount().RowCount())
 		} else if len(ctx.AllRowCount()) > 0 {
-			qs.Limit = b.visitExpression(ctx.RowCount(0))
+			query.Limit = b.visitExpression(ctx.RowCount(0))
 		}
 	}
 	if ctx.OFFSET() != nil && len(ctx.AllRowCount()) > 0 {
 		if ctx.LIMIT() != nil {
-			qs.Offset = b.visitExpression(ctx.RowCount(len(ctx.AllRowCount()) - 1))
+			query.Offset = b.visitExpression(ctx.RowCount(len(ctx.AllRowCount()) - 1))
 		} else {
-			qs.Offset = b.visitExpression(ctx.RowCount(0))
+			query.Offset = b.visitExpression(ctx.RowCount(0))
 		}
 	}
-	return qs
+	return query
 }
 
 func (b *AstBuilder) VisitQueryTermDefault(ctx *generated.QueryTermDefaultContext) interface{} {
@@ -655,6 +654,8 @@ func (b *AstBuilder) VisitStringLiteral(ctx *generated.StringLiteralContext) int
 			text = text[1 : len(text)-1]
 		}
 	}
+	// Unescape doubled quotes, matching Java AstBuilder behavior.
+	text = strings.ReplaceAll(text, "''", "'")
 	return &ast.StringLiteral{Value: text}
 }
 
@@ -714,6 +715,8 @@ func (b *AstBuilder) VisitQuotedIdentifier(ctx *generated.QuotedIdentifierContex
 	if len(text) >= 2 && text[0] == '"' && text[len(text)-1] == '"' {
 		text = text[1 : len(text)-1]
 	}
+	// Unescape doubled double-quotes, matching Java AstBuilder behavior.
+	text = strings.ReplaceAll(text, `""`, `"`)
 	return &ast.Identifier{Value: text, Delimited: true}
 }
 
@@ -722,6 +725,8 @@ func (b *AstBuilder) VisitBackQuotedIdentifier(ctx *generated.BackQuotedIdentifi
 	if len(text) >= 2 && text[0] == '`' && text[len(text)-1] == '`' {
 		text = text[1 : len(text)-1]
 	}
+	// Unescape doubled backticks, matching Java AstBuilder behavior.
+	text = strings.ReplaceAll(text, "``", "`")
 	return &ast.Identifier{Value: text, Delimited: true}
 }
 
@@ -774,6 +779,9 @@ func (b *AstBuilder) VisitGroupBy(ctx *generated.GroupByContext) interface{} {
 		switch v := result.(type) {
 		case *ast.GroupBy:
 			gb.Expressions = append(gb.Expressions, v.Expressions...)
+			if v.Sets {
+				gb.Sets = true
+			}
 		case []ast.Expression:
 			gb.Expressions = append(gb.Expressions, v...)
 		case ast.Expression:
@@ -811,7 +819,10 @@ func (b *AstBuilder) VisitGenericType(ctx *generated.GenericTypeContext) interfa
 }
 
 func (b *AstBuilder) VisitTypeParameter(ctx *generated.TypeParameterContext) interface{} {
-	return ast.TypeParameter{Type: b.visitDataType(ctx.Type_())}
+	if iv := ctx.INTEGER_VALUE(); iv != nil {
+		return &ast.NumericParameter{Value: iv.GetText()}
+	}
+	return &ast.TypeParameter{Type: b.visitDataType(ctx.Type_())}
 }
 
 // --------------------------------------------------------------------------
@@ -991,7 +1002,7 @@ func (b *AstBuilder) VisitTypeConstructor(ctx *generated.TypeConstructorContext)
 	if ctx.DOUBLE() != nil {
 		typeName = "DOUBLE PRECISION"
 	}
-	return &ast.GenericLiteral{Type: strings.ToUpper(typeName), Value: value}
+	return &ast.GenericLiteral{Type: typeName, Value: value}
 }
 
 // stripQuotes removes the surrounding single quotes of a SQL string literal
@@ -1001,4 +1012,52 @@ func stripQuotes(s string) string {
 		s = s[1 : len(s)-1]
 	}
 	return strings.ReplaceAll(s, "''", "'")
+}
+
+// VisitIntervalLiteral mirrors trino AstBuilder.visitIntervalLiteral.
+func (b *AstBuilder) VisitIntervalLiteral(ctx *generated.IntervalLiteralContext) interface{} {
+	iv := ctx.Interval()
+	sign := ""
+	if iv.MINUS() != nil {
+		sign = "-"
+	} else if iv.PLUS() != nil {
+		sign = "+"
+	}
+	interval := &ast.IntervalLiteral{
+		Sign:  sign,
+		Value: stripQuotes(iv.String_().GetText()),
+		From:  iv.IntervalField(0).GetText(),
+	}
+	if iv.TO() != nil {
+		interval.To = iv.IntervalField(1).GetText()
+	}
+	return interval
+}
+
+// VisitMultipleGroupingSets mirrors trino AstBuilder.visitMultipleGroupingSets.
+func (b *AstBuilder) VisitMultipleGroupingSets(ctx *generated.MultipleGroupingSetsContext) interface{} {
+	gb := &ast.GroupBy{Sets: true}
+	for _, gs := range ctx.AllGroupingSet() {
+		result := b.visit(gs)
+		if result == nil {
+			continue
+		}
+		exprs := result.([]ast.Expression)
+		gb.Expressions = append(gb.Expressions, &ast.Row{Items: exprs})
+	}
+	return gb
+}
+
+// VisitInlineTable mirrors trino AstBuilder.visitInlineTable.
+func (b *AstBuilder) VisitInlineTable(ctx *generated.InlineTableContext) interface{} {
+	vals := &ast.Values{}
+	for _, expr := range ctx.AllExpression() {
+		row := b.visitExpression(expr)
+		if r, ok := row.(*ast.Row); ok {
+			vals.Rows = append(vals.Rows, r.Items)
+		} else {
+			vals.Rows = append(vals.Rows, []ast.Expression{row})
+		}
+	}
+	return vals
 }

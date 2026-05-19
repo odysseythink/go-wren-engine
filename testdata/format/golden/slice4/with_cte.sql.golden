@@ -1,0 +1,9 @@
+WITH
+  revenue AS (
+   SELECT a
+   FROM
+     t
+) 
+SELECT a
+FROM
+  revenue

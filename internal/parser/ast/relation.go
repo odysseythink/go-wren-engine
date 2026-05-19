@@ -144,6 +144,8 @@ func (v *Values) GetChildren() []Node {
 	return children
 }
 func (v *Values) isRelation() {}
+func (v *Values) isQueryBody() {}
+func (v *Values) isStatement() {}
 
 // Lateral represents LATERAL (subquery) in a FROM clause.
 type Lateral struct {

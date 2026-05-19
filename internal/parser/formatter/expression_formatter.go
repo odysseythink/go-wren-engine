@@ -23,6 +23,9 @@ type exprFormatter struct {
 // process renders one expression node. An unhandled node is a hard error,
 // mirroring Java ExpressionFormatter.visitExpression throwing.
 func (e *exprFormatter) process(expr ast.Expression) string {
+	if expr == nil {
+		return ""
+	}
 	switch n := expr.(type) {
 	case *ast.Identifier:
 		if !n.Delimited {
@@ -81,18 +84,30 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 	case *ast.CoalesceExpression:
 		return "COALESCE(" + e.joinExpressions(n.Operands) + ")"
 	case *ast.InPredicate:
-		return "(" + e.process(n.Value) + " IN " + e.process(n.ValueList) + ")"
+		out := "(" + e.process(n.Value) + " IN " + e.process(n.ValueList) + ")"
+		if n.Not {
+			out = "(NOT " + out + ")"
+		}
+		return out
 	case *ast.InListExpression:
 		return "(" + e.joinExpressions(n.Values) + ")"
 	case *ast.BetweenPredicate:
-		return "(" + e.process(n.Value) + " BETWEEN " +
+		out := "(" + e.process(n.Value) + " BETWEEN " +
 			e.process(n.Min) + " AND " + e.process(n.Max) + ")"
+		if n.Not {
+			out = "(NOT " + out + ")"
+		}
+		return out
 	case *ast.LikePredicate:
 		out := "(" + e.process(n.Value) + " LIKE " + e.process(n.Pattern)
 		if n.Escape != nil {
 			out += " ESCAPE " + e.process(n.Escape)
 		}
-		return out + ")"
+		out += ")"
+		if n.Not {
+			out = "(NOT " + out + ")"
+		}
+		return out
 	case *ast.IsNullPredicate:
 		if n.Not {
 			return "(" + e.process(n.Value) + " IS NOT NULL)"
@@ -115,12 +130,14 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 	case *ast.SubqueryExpression:
 		return "(" + FormatSQLDialect(n.Query, e.dialect) + ")"
 	case *ast.ExistsPredicate:
-		return "(EXISTS " + FormatSQLDialect(n.Subquery, e.dialect) + ")"
+		return "(EXISTS (" + FormatSQLDialect(n.Subquery, e.dialect) + "))"
 	case *ast.QuantifiedComparison:
 		return "(" + e.process(n.Value) + " " + string(n.Operator) + " " +
-			n.Quantifier + " " + e.process(n.Subquery) + ")"
+			n.Quantifier + " (" + FormatSQLDialect(n.Subquery.(*ast.SubqueryExpression).Query, e.dialect) + "))"
 	case *ast.StarExpression:
 		return "*"
+	case *ast.IntervalLiteral:
+		return e.formatInterval(n)
 	default:
 		panic(fmt.Sprintf("ExpressionFormatter: not yet implemented: %T", n))
 	}
@@ -348,4 +365,18 @@ func (e *exprFormatter) formatSimpleCase(n *ast.SimpleCaseExpression) string {
 	}
 	parts = append(parts, "END")
 	return "(" + strings.Join(parts, " ") + ")"
+}
+
+// formatInterval renders an interval literal. Mirrors trino
+// ExpressionFormatter.visitIntervalLiteral.
+func (e *exprFormatter) formatInterval(n *ast.IntervalLiteral) string {
+	result := "INTERVAL "
+	if n.Sign != "" {
+		result += n.Sign
+	}
+	result += " " + formatStringLiteral(n.Value) + " " + strings.ToUpper(n.From)
+	if n.To != "" {
+		result += " TO " + strings.ToUpper(n.To)
+	}
+	return result
 }

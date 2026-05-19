@@ -452,3 +452,15 @@ type QuantifiedComparison struct {
 
 func (q *QuantifiedComparison) GetChildren() []Node { return []Node{q.Value, q.Subquery} }
 func (q *QuantifiedComparison) isExpression()       {}
+
+// IntervalLiteral represents an interval literal: INTERVAL 'value' unit [TO unit].
+type IntervalLiteral struct {
+	BaseNode
+	Sign  string // "+" | "-" | ""
+	Value string
+	From  string
+	To    string
+}
+
+func (i *IntervalLiteral) GetChildren() []Node { return nil }
+func (i *IntervalLiteral) isExpression()       {}

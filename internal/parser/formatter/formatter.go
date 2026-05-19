@@ -75,6 +75,8 @@ func (f *formatter) process(node ast.Node, indent int) {
 		f.visitAllColumns(n)
 	case *ast.QuerySpecification:
 		f.visitQuerySpecification(n, indent)
+	case *ast.Query:
+		f.visitQuery(n, indent)
 	default:
 		panic(fmt.Sprintf("SqlFormatter: not yet implemented: %T", n))
 	}
@@ -376,15 +378,54 @@ func (f *formatter) formatGroupBy(g *ast.GroupBy) string {
 	// models each set as a *Row of its grouping columns.
 	sets := make([]string, len(g.Expressions))
 	for i, x := range g.Expressions {
+		cols := make([]string, 0)
 		if r, ok := x.(*ast.Row); ok {
-			cols := make([]string, len(r.Items))
-			for j, it := range r.Items {
-				cols[j] = ef.process(it)
+			for _, it := range r.Items {
+				cols = append(cols, ef.process(it))
 			}
-			sets[i] = "(" + strings.Join(cols, ", ") + ")"
 		} else {
-			sets[i] = "(" + ef.process(x) + ")"
+			cols = append(cols, ef.process(x))
 		}
+		sets[i] = "(" + strings.Join(cols, ", ") + ")"
 	}
 	return "GROUPING SETS (" + strings.Join(sets, ", ") + ")"
+}
+
+// visitQuery mirrors trino SqlFormatter.visitQuery.
+func (f *formatter) visitQuery(n *ast.Query, indent int) {
+	if n.With != nil {
+		f.append(indent, "WITH")
+		if n.With.Recursive {
+			f.builder.WriteString(" RECURSIVE")
+		}
+		f.builder.WriteString("\n  ")
+		for i := range n.With.Queries {
+			q := &n.With.Queries[i]
+			f.append(indent, formatExpression(q.Name, f.dialect))
+			f.appendAliasColumns(q.ColumnNames)
+			f.builder.WriteString(" AS ")
+			f.visitTableSubquery(&ast.TableSubquery{Query: q.Query}, indent)
+			f.builder.WriteString("\n")
+			if i < len(n.With.Queries)-1 {
+				f.builder.WriteString(", ")
+			}
+		}
+	}
+
+	f.processRelation(n.Body, indent)
+	f.appendOrderBy(n.OrderBy, indent)
+	f.appendOffset(n.Offset, indent)
+	f.appendLimit(n.Limit, indent)
+}
+
+// processRelation mirrors trino SqlFormatter.processRelation: a bare Table
+// gets the "TABLE name" shorthand, everything else is processed normally.
+func (f *formatter) processRelation(node ast.Node, indent int) {
+	if t, ok := node.(*ast.Table); ok {
+		f.builder.WriteString("TABLE ")
+		f.builder.WriteString(formatName(t.Name, f.dialect))
+		f.builder.WriteString("\n")
+		return
+	}
+	f.process(node, indent)
 }
