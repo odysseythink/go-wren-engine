@@ -56,6 +56,8 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 		return "(" + strings.Join(parts, " "+string(n.Operator)+" ") + ")"
 	case *ast.NotExpression:
 		return "(NOT " + e.process(n.Value) + ")"
+	case *ast.FunctionCall:
+		return e.formatFunctionCall(n)
 	default:
 		panic(fmt.Sprintf("ExpressionFormatter: not yet implemented: %T", n))
 	}
@@ -133,4 +135,126 @@ func (e *exprFormatter) formatTypeParameter(p ast.DataTypeParameter) string {
 // '(' left ' ' op ' ' right ')'. Mirrors trino formatBinaryExpression.
 func (e *exprFormatter) formatBinary(op string, left, right ast.Expression) string {
 	return "(" + e.process(left) + " " + op + " " + e.process(right) + ")"
+}
+
+// formatFunctionCall mirrors trino ExpressionFormatter.visitFunctionCall for
+// the DEFAULT dialect (BigQuery/DuckDB special-casing is out of P2 scope).
+func (e *exprFormatter) formatFunctionCall(n *ast.FunctionCall) string {
+	arguments := e.joinExpressions(n.Arguments)
+	if len(n.Arguments) == 0 && strings.EqualFold(n.Name.Last(), "count") {
+		arguments = "*"
+	}
+	if n.Distinct {
+		arguments = "DISTINCT " + arguments
+	}
+
+	var b strings.Builder
+	b.WriteString(formatName(n.Name, e.dialect))
+	b.WriteString("(")
+	b.WriteString(arguments)
+	if len(n.OrderBy) > 0 {
+		b.WriteString(" ")
+		b.WriteString(e.formatOrderBy(n.OrderBy))
+	}
+	b.WriteString(")")
+
+	if n.IgnoreNulls {
+		b.WriteString(" IGNORE NULLS")
+	}
+	if n.Filter != nil {
+		b.WriteString(" FILTER (WHERE ")
+		b.WriteString(e.process(n.Filter))
+		b.WriteString(")")
+	}
+	if n.Window != nil {
+		b.WriteString(" OVER ")
+		b.WriteString(e.formatWindowSpec(n.Window))
+	}
+	return b.String()
+}
+
+// joinExpressions renders a comma-separated list of expressions.
+func (e *exprFormatter) joinExpressions(exprs []ast.Expression) string {
+	parts := make([]string, len(exprs))
+	for i, x := range exprs {
+		parts[i] = e.process(x)
+	}
+	return strings.Join(parts, ", ")
+}
+
+// formatOrderBy renders "ORDER BY <items>". Mirrors trino formatOrderBy.
+func (e *exprFormatter) formatOrderBy(items []ast.SortItem) string {
+	return "ORDER BY " + e.formatSortItems(items)
+}
+
+// formatSortItems renders a comma-separated list of sort items.
+func (e *exprFormatter) formatSortItems(items []ast.SortItem) string {
+	parts := make([]string, len(items))
+	for i := range items {
+		parts[i] = e.formatSortItem(&items[i])
+	}
+	return strings.Join(parts, ", ")
+}
+
+// formatSortItem renders "<key> ASC|DESC [NULLS FIRST|LAST]". Mirrors trino
+// sortItemFormatterFunction.
+func (e *exprFormatter) formatSortItem(s *ast.SortItem) string {
+	out := e.process(s.SortKey)
+	if s.Ordering == ast.OrderingDesc {
+		out += " DESC"
+	} else {
+		out += " ASC"
+	}
+	switch s.NullOrdering {
+	case ast.NullOrderingFirst:
+		out += " NULLS FIRST"
+	case ast.NullOrderingLast:
+		out += " NULLS LAST"
+	}
+	return out
+}
+
+// formatWindowSpec renders a window specification "( ... )". Mirrors trino
+// formatWindowSpecification + formatFrame.
+func (e *exprFormatter) formatWindowSpec(w *ast.Window) string {
+	var parts []string
+	if len(w.PartitionBy) > 0 {
+		parts = append(parts, "PARTITION BY "+e.joinExpressions(w.PartitionBy))
+	}
+	if len(w.OrderBy) > 0 {
+		parts = append(parts, e.formatOrderBy(w.OrderBy))
+	}
+	if w.Frame != nil {
+		parts = append(parts, e.formatFrame(w.Frame))
+	}
+	return "(" + strings.Join(parts, " ") + ")"
+}
+
+// formatFrame renders a window frame. Mirrors trino formatFrame for the
+// ROWS/RANGE BETWEEN ... AND ... shapes the corpus exercises.
+func (e *exprFormatter) formatFrame(f *ast.WindowFrame) string {
+	out := string(f.Type) + " "
+	if f.End.Type != "" {
+		return out + "BETWEEN " + e.formatFrameBound(&f.Start) +
+			" AND " + e.formatFrameBound(&f.End)
+	}
+	return out + e.formatFrameBound(&f.Start)
+}
+
+// formatFrameBound renders one frame bound. Mirrors trino formatFrameBound.
+func (e *exprFormatter) formatFrameBound(b *ast.FrameBound) string {
+	switch b.Type {
+	case ast.BoundTypeUnboundedPreceding:
+		return "UNBOUNDED PRECEDING"
+	case ast.BoundTypePreceding:
+		return e.process(b.Value) + " PRECEDING"
+	case ast.BoundTypeCurrentRow:
+		return "CURRENT ROW"
+	case ast.BoundTypeFollowing:
+		return e.process(b.Value) + " FOLLOWING"
+	case ast.BoundTypeUnboundedFollowing:
+		return "UNBOUNDED FOLLOWING"
+	default:
+		panic(fmt.Sprintf("ExpressionFormatter: unhandled frame bound: %q", b.Type))
+	}
 }
