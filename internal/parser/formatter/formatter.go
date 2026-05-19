@@ -55,6 +55,8 @@ func (f *formatter) process(node ast.Node, indent int) {
 		f.visitAliasedRelation(n, indent)
 	case *ast.TableSubquery:
 		f.visitTableSubquery(n, indent)
+	case *ast.Join:
+		f.visitJoin(n, indent)
 	default:
 		panic(fmt.Sprintf("SqlFormatter: not yet implemented: %T", n))
 	}
@@ -124,4 +126,43 @@ func (f *formatter) appendAliasColumns(columns []ast.Identifier) {
 	f.builder.WriteString(" (")
 	f.builder.WriteString(strings.Join(parts, ", "))
 	f.builder.WriteString(")")
+}
+
+// visitJoin mirrors trino SqlFormatter.visitJoin.
+func (f *formatter) visitJoin(n *ast.Join, indent int) {
+	joinType := string(n.JoinType) // CROSS / INNER / LEFT / RIGHT / FULL
+	if _, natural := n.Criteria.(*ast.NaturalJoin); natural {
+		joinType = "NATURAL " + joinType
+	}
+
+	f.process(n.Left, indent)
+	f.builder.WriteString("\n")
+	if n.JoinType == ast.JoinTypeImplicit {
+		f.append(indent, ", ")
+	} else {
+		f.append(indent, joinType)
+		f.builder.WriteString(" JOIN ")
+	}
+	f.process(n.Right, indent)
+
+	if n.JoinType == ast.JoinTypeCross || n.JoinType == ast.JoinTypeImplicit {
+		return
+	}
+	switch c := n.Criteria.(type) {
+	case *ast.JoinUsing:
+		cols := make([]string, len(c.Columns))
+		for i := range c.Columns {
+			cols[i] = c.Columns[i].Value
+		}
+		f.builder.WriteString(" USING (")
+		f.builder.WriteString(strings.Join(cols, ", "))
+		f.builder.WriteString(")")
+	case *ast.JoinOn:
+		f.builder.WriteString(" ON ")
+		f.builder.WriteString(formatExpression(c.Expression, f.dialect))
+	case *ast.NaturalJoin, nil:
+		// no criteria suffix
+	default:
+		panic(fmt.Sprintf("SqlFormatter: unknown join criteria: %T", c))
+	}
 }

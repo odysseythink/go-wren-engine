@@ -1,0 +1,4 @@
+SELECT a
+FROM
+  orders
+INNER JOIN lineitem USING (orderkey)

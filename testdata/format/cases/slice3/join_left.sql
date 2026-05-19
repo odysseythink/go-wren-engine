@@ -1,0 +1,1 @@
+SELECT a FROM orders o LEFT JOIN customer c ON o.custkey = c.custkey
