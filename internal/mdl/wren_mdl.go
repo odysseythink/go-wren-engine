@@ -104,6 +104,18 @@ func (m *WrenMDL) GetCumulativeMetric(name string) (*dto.CumulativeMetric, bool)
 	return cm, ok
 }
 
+// GetRelationshipColumn returns model's column named columnName if it is a
+// relationship column. Mirrors Java WrenMDL.getRelationshipColumn.
+func GetRelationshipColumn(model *dto.Model, columnName string) (*dto.Column, bool) {
+	for i := range model.Columns {
+		c := &model.Columns[i]
+		if c.Name == columnName && c.Relationship != "" {
+			return c, true
+		}
+	}
+	return nil, false
+}
+
 // GetRelationship returns a relationship by name.
 func (m *WrenMDL) GetRelationship(name string) (*dto.Relationship, bool) {
 	r, ok := m.relationships[name]

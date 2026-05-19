@@ -24,6 +24,27 @@ func ReverseJoinType(j JoinType) JoinType {
 	}
 }
 
+// ReverseRelationship returns r with its models and join type reversed.
+// Mirrors Java Relationship.reverse.
+func ReverseRelationship(r *Relationship) *Relationship {
+	models := make([]string, len(r.Models))
+	for i, m := range r.Models {
+		models[len(r.Models)-1-i] = m
+	}
+	return &Relationship{
+		Name:             r.Name,
+		Models:           models,
+		JoinType:         ReverseJoinType(r.JoinType),
+		Condition:        r.Condition,
+		ManySideSortKeys: r.ManySideSortKeys,
+		IsReverse:        true,
+	}
+}
+
+// IsToOne / IsToMany classify a join type. Mirror JoinType.isToOne/isToMany.
+func IsToOne(j JoinType) bool  { return j == JoinTypeOneToOne || j == JoinTypeManyToOne }
+func IsToMany(j JoinType) bool { return j == JoinTypeOneToMany || j == JoinTypeManyToMany }
+
 // GenericJoinType returns the generic direction.
 func GenericJoinType(j JoinType) string {
 	switch j {
