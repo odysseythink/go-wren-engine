@@ -10,9 +10,11 @@ import (
 func TestRewriteNoRules(t *testing.T) {
 	ctx := &analyzer.SessionContext{Catalog: "wren", Schema: "public"}
 	analyzed := mdl.NewAnalyzedMDL(nil)
-	// AstBuilder not yet implemented, so parsing returns error.
-	_, err := Rewrite("SELECT 1", ctx, analyzed)
-	if err == nil {
-		t.Fatal("Expected parse error since AstBuilder is not implemented")
+	result, err := Rewrite("SELECT 1", ctx, analyzed)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != "SELECT 1" {
+		t.Fatalf("expected 'SELECT 1', got '%s'", result)
 	}
 }

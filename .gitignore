@@ -1,0 +1,8 @@
+# 编译产物
+/wren-server
+/bin/
+*.test
+*.out
+
+# 本地环境
+.DS_Store

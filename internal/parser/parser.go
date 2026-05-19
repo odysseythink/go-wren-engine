@@ -8,15 +8,37 @@ import (
 	generated "github.com/wren-engine/wren/internal/parser/generated"
 )
 
+// caseInsensitiveStream wraps an antlr.InputStream and uppercases characters
+// returned by LA(), making the lexer treat lowercase letters as uppercase.
+// String literal text remains unchanged because GetText() reads from the
+// original underlying data.
+type caseInsensitiveStream struct {
+	*antlr.InputStream
+}
+
+func newCaseInsensitiveStream(data string) *caseInsensitiveStream {
+	return &caseInsensitiveStream{
+		InputStream: antlr.NewInputStream(data),
+	}
+}
+
+func (c *caseInsensitiveStream) LA(offset int) int {
+	r := c.InputStream.LA(offset)
+	if r >= 'a' && r <= 'z' {
+		return r - ('a' - 'A')
+	}
+	return r
+}
+
 // ParseSQL parses a SQL string into an AST Statement.
 func ParseSQL(sql string) (ast.Statement, error) {
-	lexer := generated.NewSqlBaseLexer(antlr.NewInputStream(sql))
+	lexer := generated.NewSqlBaseLexer(newCaseInsensitiveStream(sql))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := generated.NewSqlBaseParser(stream)
 	tree := p.SingleStatement()
 
-	builder := &AstBuilder{}
-	result := builder.Visit(tree)
+	builder := &AstBuilder{BaseSqlBaseVisitor: &generated.BaseSqlBaseVisitor{}}
+	result := tree.Accept(builder)
 	if result == nil {
 		return nil, fmt.Errorf("failed to parse SQL: %s", sql)
 	}
@@ -29,13 +51,13 @@ func ParseSQL(sql string) (ast.Statement, error) {
 
 // ParseExpression parses a SQL expression into an AST Expression.
 func ParseExpression(sql string) (ast.Expression, error) {
-	lexer := generated.NewSqlBaseLexer(antlr.NewInputStream(sql))
+	lexer := generated.NewSqlBaseLexer(newCaseInsensitiveStream(sql))
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := generated.NewSqlBaseParser(stream)
-	tree := p.Expression()
+	tree := p.StandaloneExpression()
 
-	builder := &AstBuilder{}
-	result := builder.Visit(tree)
+	builder := &AstBuilder{BaseSqlBaseVisitor: &generated.BaseSqlBaseVisitor{}}
+	result := tree.Accept(builder)
 	if result == nil {
 		return nil, fmt.Errorf("failed to parse expression: %s", sql)
 	}
@@ -44,12 +66,4 @@ func ParseExpression(sql string) (ast.Expression, error) {
 		return nil, fmt.Errorf("parse result is not an Expression: %T", result)
 	}
 	return expr, nil
-}
-
-// AstBuilder walks the ANTLR4 parse tree and produces Go AST nodes.
-type AstBuilder struct{}
-
-// Visit dispatches to the appropriate method based on the parse tree node type.
-func (b *AstBuilder) Visit(tree antlr.ParseTree) any {
-	return nil // Will be filled in incrementally as grammar rules are mapped
 }
