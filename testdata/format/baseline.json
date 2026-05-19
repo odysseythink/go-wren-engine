@@ -26,6 +26,10 @@
     "slice2/predicate_extract.sql": "panic",
     "slice2/predicate_in.sql": "panic",
     "slice2/predicate_like.sql": "panic",
-    "slice2/predicate_null.sql": "panic"
+    "slice2/predicate_null.sql": "panic",
+    "slice3/relation_alias_cols.sql": "panic",
+    "slice3/relation_aliased.sql": "panic",
+    "slice3/relation_subquery.sql": "panic",
+    "slice3/relation_table.sql": "panic"
   }
 }

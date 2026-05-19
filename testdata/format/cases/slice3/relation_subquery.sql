@@ -1,0 +1,1 @@
+SELECT a FROM (SELECT a FROM t) sub

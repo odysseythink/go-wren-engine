@@ -49,6 +49,12 @@ type formatter struct {
 // hard error, mirroring Java SqlFormatter.visitNode throwing.
 func (f *formatter) process(node ast.Node, indent int) {
 	switch n := node.(type) {
+	case *ast.Table:
+		f.builder.WriteString(formatName(n.Name, f.dialect))
+	case *ast.AliasedRelation:
+		f.visitAliasedRelation(n, indent)
+	case *ast.TableSubquery:
+		f.visitTableSubquery(n, indent)
 	default:
 		panic(fmt.Sprintf("SqlFormatter: not yet implemented: %T", n))
 	}
@@ -74,4 +80,48 @@ func formatName(name ast.QualifiedName, dialect Dialect) string {
 		parts[i] = formatExpression(&name.OriginalParts[i], dialect)
 	}
 	return strings.Join(parts, ".")
+}
+
+// visitAliasedRelation mirrors trino SqlFormatter.visitAliasedRelation.
+func (f *formatter) visitAliasedRelation(n *ast.AliasedRelation, indent int) {
+	f.processRelationSuffix(n.Relation, indent)
+	f.builder.WriteString(" ")
+	f.builder.WriteString(formatExpression(n.Alias, f.dialect))
+	f.appendAliasColumns(n.ColumnNames)
+}
+
+// processRelationSuffix wraps a relation in "( ... )" when it needs grouping
+// (aliased / sampled / join), otherwise processes it directly. Mirrors trino
+// SqlFormatter.processRelationSuffix.
+func (f *formatter) processRelationSuffix(relation ast.Relation, indent int) {
+	switch relation.(type) {
+	case *ast.AliasedRelation, *ast.SampledRelation, *ast.Join:
+		f.builder.WriteString("( ")
+		f.process(relation, indent+1)
+		f.append(indent, ")")
+	default:
+		f.process(relation, indent)
+	}
+}
+
+// visitTableSubquery mirrors trino SqlFormatter.visitTableSubquery.
+func (f *formatter) visitTableSubquery(n *ast.TableSubquery, indent int) {
+	f.builder.WriteString("(\n")
+	f.process(n.Query, indent+1)
+	f.append(indent, ") ")
+}
+
+// appendAliasColumns appends " (col, col, ...)" when columns is non-empty.
+// Mirrors trino SqlFormatter.appendAliasColumns.
+func (f *formatter) appendAliasColumns(columns []ast.Identifier) {
+	if len(columns) == 0 {
+		return
+	}
+	parts := make([]string, len(columns))
+	for i := range columns {
+		parts[i] = formatExpression(&columns[i], f.dialect)
+	}
+	f.builder.WriteString(" (")
+	f.builder.WriteString(strings.Join(parts, ", "))
+	f.builder.WriteString(")")
 }
