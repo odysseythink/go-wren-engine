@@ -1,0 +1,44 @@
+{
+  "catalog": "wren",
+  "schema": "test",
+  "models": [
+    {
+      "name": "Orders",
+      "refSql": "select * from orders",
+      "primaryKey": "orderkey",
+      "columns": [
+        {"name": "orderkey", "type": "int4", "expression": "o_orderkey"},
+        {"name": "custkey", "type": "int4", "expression": "o_custkey"},
+        {"name": "totalprice", "type": "float8", "expression": "o_totalprice"},
+        {"name": "orderdate", "type": "date", "expression": "o_orderdate"}
+      ]
+    }
+  ],
+  "relationships": [],
+  "metrics": [
+    {
+      "name": "Revenue",
+      "baseObject": "Orders",
+      "dimension": [{"name": "custkey", "type": "int4", "expression": "custkey"}],
+      "measure": [{"name": "totalprice", "type": "int4", "expression": "sum(totalprice)"}],
+      "timeGrain": [{"name": "orderdate", "refColumn": "orderdate", "dateParts": ["YEAR", "MONTH"]}]
+    },
+    {
+      "name": "RevenueByCustomer",
+      "baseObject": "Revenue",
+      "dimension": [{"name": "custkey", "type": "int4", "expression": "custkey"}],
+      "measure": [{"name": "totalprice", "type": "int4", "expression": "sum(totalprice)"}]
+    }
+  ],
+  "cumulativeMetrics": [
+    {
+      "name": "WeeklyRevenue",
+      "baseObject": "Orders",
+      "measure": {"name": "totalprice", "type": "int4", "operator": "sum", "refColumn": "totalprice"},
+      "window": {"name": "orderdate", "refColumn": "orderdate", "timeUnit": "WEEK", "start": "1994-01-01", "end": "1994-12-31"}
+    }
+  ],
+  "enumDefinitions": [],
+  "views": [],
+  "macros": []
+}

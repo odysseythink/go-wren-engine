@@ -7,8 +7,8 @@ func TestLoadCorpus_TPCH(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadCorpus: %v", err)
 	}
-	if len(cases) != 28 {
-		t.Fatalf("want 22 cases, got %d", len(cases))
+	if len(cases) != 37 {
+		t.Fatalf("want 37 cases, got %d", len(cases))
 	}
 	c := cases[0]
 	if c.Group != "tpch" {
