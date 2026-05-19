@@ -22,10 +22,24 @@ func (r *WrenSqlRewrite) Apply(root ast.Statement, ctx *base.SessionContext, ana
 		return nil, err
 	}
 
-	// non-dynamic path: only model descriptors (metrics/cumulative -> P3b)
+	// non-dynamic path: model + metric + cumulative descriptors
 	var allDescriptors []QueryDescriptor
 	for _, model := range analysis.Models() {
 		info, err := relationInfoOfModel(model, wrenMDL)
+		if err != nil {
+			return nil, err
+		}
+		allDescriptors = append(allDescriptors, info)
+	}
+	for _, metric := range analysis.Metrics() {
+		info, err := relationInfoOfMetric(metric, wrenMDL)
+		if err != nil {
+			return nil, err
+		}
+		allDescriptors = append(allDescriptors, info)
+	}
+	for _, cm := range analysis.CumulativeMetrics() {
+		info, err := cumulativeMetricInfoGet(cm, wrenMDL)
 		if err != nil {
 			return nil, err
 		}
