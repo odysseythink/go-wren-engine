@@ -326,3 +326,129 @@ type GenericLiteral struct {
 
 func (g *GenericLiteral) GetChildren() []Node { return nil }
 func (g *GenericLiteral) isExpression()       {}
+
+// LogicalExpression represents an N-ary AND / OR. trino flattens consecutive
+// same-operator terms (a AND b AND c => one node with three terms), so the Go
+// AST must match for byte-identical output.
+type LogicalExpression struct {
+	BaseNode
+	Operator LogicalOperator
+	Terms    []Expression
+}
+
+func (l *LogicalExpression) GetChildren() []Node {
+	children := make([]Node, len(l.Terms))
+	for i, t := range l.Terms {
+		children[i] = t
+	}
+	return children
+}
+func (l *LogicalExpression) isExpression() {}
+
+// SearchedCaseExpression represents CASE WHEN ... THEN ... [ELSE ...] END.
+type SearchedCaseExpression struct {
+	BaseNode
+	WhenClauses  []WhenClause
+	DefaultValue Expression
+}
+
+func (c *SearchedCaseExpression) GetChildren() []Node { return nil }
+func (c *SearchedCaseExpression) isExpression()       {}
+
+// SimpleCaseExpression represents CASE operand WHEN ... THEN ... [ELSE ...] END.
+type SimpleCaseExpression struct {
+	BaseNode
+	Operand      Expression
+	WhenClauses  []WhenClause
+	DefaultValue Expression
+}
+
+func (c *SimpleCaseExpression) GetChildren() []Node { return nil }
+func (c *SimpleCaseExpression) isExpression()       {}
+
+// WhenClause represents WHEN operand THEN result.
+type WhenClause struct {
+	BaseNode
+	Operand Expression
+	Result  Expression
+}
+
+func (w *WhenClause) GetChildren() []Node { return []Node{w.Operand, w.Result} }
+func (w *WhenClause) isExpression()       {}
+
+// IfExpression represents IF(condition, trueValue [, falseValue]).
+type IfExpression struct {
+	BaseNode
+	Condition  Expression
+	TrueValue  Expression
+	FalseValue Expression
+}
+
+func (i *IfExpression) GetChildren() []Node { return nil }
+func (i *IfExpression) isExpression()       {}
+
+// NullIfExpression represents NULLIF(first, second).
+type NullIfExpression struct {
+	BaseNode
+	First  Expression
+	Second Expression
+}
+
+func (n *NullIfExpression) GetChildren() []Node { return []Node{n.First, n.Second} }
+func (n *NullIfExpression) isExpression()       {}
+
+// ExtractExpression represents EXTRACT(field FROM expr). Field is upper-cased.
+type ExtractExpression struct {
+	BaseNode
+	Field      string
+	Expression Expression
+}
+
+func (x *ExtractExpression) GetChildren() []Node { return []Node{x.Expression} }
+func (x *ExtractExpression) isExpression()       {}
+
+// SubscriptExpression represents base[index].
+type SubscriptExpression struct {
+	BaseNode
+	Base  Expression
+	Index Expression
+}
+
+func (s *SubscriptExpression) GetChildren() []Node { return []Node{s.Base, s.Index} }
+func (s *SubscriptExpression) isExpression()       {}
+
+// Row represents ROW(item, item, ...).
+type Row struct {
+	BaseNode
+	Items []Expression
+}
+
+func (r *Row) GetChildren() []Node {
+	children := make([]Node, len(r.Items))
+	for i, it := range r.Items {
+		children[i] = it
+	}
+	return children
+}
+func (r *Row) isExpression() {}
+
+// ExistsPredicate represents EXISTS (subquery).
+type ExistsPredicate struct {
+	BaseNode
+	Subquery Statement
+}
+
+func (e *ExistsPredicate) GetChildren() []Node { return []Node{e.Subquery} }
+func (e *ExistsPredicate) isExpression()       {}
+
+// QuantifiedComparison represents value op ALL/ANY/SOME (subquery).
+type QuantifiedComparison struct {
+	BaseNode
+	Operator   ComparisonOperator
+	Quantifier string // "ALL" | "ANY" | "SOME"
+	Value      Expression
+	Subquery   Expression
+}
+
+func (q *QuantifiedComparison) GetChildren() []Node { return []Node{q.Value, q.Subquery} }
+func (q *QuantifiedComparison) isExpression()       {}

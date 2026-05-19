@@ -408,22 +408,47 @@ func (b *AstBuilder) VisitLogicalNot(ctx *generated.LogicalNotContext) interface
 	return &ast.NotExpression{Value: b.visitExpression(ctx.BooleanExpression())}
 }
 
+// VisitOr flattens nested OR contexts into one N-ary LogicalExpression,
+// matching trino AstBuilder.visitOr.
 func (b *AstBuilder) VisitOr(ctx *generated.OrContext) interface{} {
-	exprs := ctx.AllBooleanExpression()
-	left := b.visitExpression(exprs[0])
-	for i := 1; i < len(exprs); i++ {
-		left = &ast.LogicalBinaryExpression{Operator: ast.LogicalOr, Left: left, Right: b.visitExpression(exprs[i])}
+	return &ast.LogicalExpression{
+		Operator: ast.LogicalOr,
+		Terms:    b.flattenLogical(ctx, ast.LogicalOr),
 	}
-	return left
 }
 
+// VisitAnd flattens nested AND contexts into one N-ary LogicalExpression,
+// matching trino AstBuilder.visitAnd.
 func (b *AstBuilder) VisitAnd(ctx *generated.AndContext) interface{} {
-	exprs := ctx.AllBooleanExpression()
-	left := b.visitExpression(exprs[0])
-	for i := 1; i < len(exprs); i++ {
-		left = &ast.LogicalBinaryExpression{Operator: ast.LogicalAnd, Left: left, Right: b.visitExpression(exprs[i])}
+	return &ast.LogicalExpression{
+		Operator: ast.LogicalAnd,
+		Terms:    b.flattenLogical(ctx, ast.LogicalAnd),
 	}
-	return left
+}
+
+// flattenLogical collects the operand expressions of a chain of same-operator
+// AND/OR contexts in left-to-right order.
+func (b *AstBuilder) flattenLogical(ctx antlr.ParseTree, op ast.LogicalOperator) []ast.Expression {
+	var terms []ast.Expression
+	var children []generated.IBooleanExpressionContext
+	switch c := ctx.(type) {
+	case *generated.AndContext:
+		if op == ast.LogicalAnd {
+			children = c.AllBooleanExpression()
+		}
+	case *generated.OrContext:
+		if op == ast.LogicalOr {
+			children = c.AllBooleanExpression()
+		}
+	}
+	if children == nil {
+		// Not a same-operator context: this whole subtree is one term.
+		return []ast.Expression{b.visitExpression(ctx)}
+	}
+	for _, child := range children {
+		terms = append(terms, b.flattenLogical(child, op)...)
+	}
+	return terms
 }
 
 // --------------------------------------------------------------------------
@@ -524,7 +549,12 @@ func (b *AstBuilder) VisitQuantifiedComparison(ctx *generated.QuantifiedComparis
 			op = ast.ComparisonGreaterEqual
 		}
 	}
-	return &ast.ComparisonExpression{Operator: op, Right: &ast.SubqueryExpression{Query: b.visitStatement(ctx.Query())}}
+	return &ast.QuantifiedComparison{
+		Operator:   op,
+		Quantifier: strings.ToUpper(ctx.ComparisonQuantifier().GetText()),
+		Value:      b.visitExpression(ctx.FunctionExpression()),
+		Subquery:   &ast.SubqueryExpression{Query: b.visitStatement(ctx.Query())},
+	}
 }
 
 // --------------------------------------------------------------------------
@@ -660,7 +690,7 @@ func (b *AstBuilder) VisitSubqueryExpression(ctx *generated.SubqueryExpressionCo
 }
 
 func (b *AstBuilder) VisitExists(ctx *generated.ExistsContext) interface{} {
-	return &ast.FunctionCall{Name: ast.QualifiedNameOf("exists"), Arguments: []ast.Expression{&ast.SubqueryExpression{Query: b.visitStatement(ctx.Query())}}}
+	return &ast.ExistsPredicate{Subquery: b.visitStatement(ctx.Query())}
 }
 
 func (b *AstBuilder) VisitParenthesizedExpression(ctx *generated.ParenthesizedExpressionContext) interface{} {
@@ -870,4 +900,81 @@ func (b *AstBuilder) VisitPatternRecognition(ctx *generated.PatternRecognitionCo
 
 func (b *AstBuilder) VisitSampledRelation(ctx *generated.SampledRelationContext) interface{} {
 	return b.visit(ctx.PatternRecognition())
+}
+
+// VisitSimpleCase mirrors trino AstBuilder.visitSimpleCase.
+func (b *AstBuilder) VisitSimpleCase(ctx *generated.SimpleCaseContext) interface{} {
+	c := &ast.SimpleCaseExpression{Operand: b.visitExpression(ctx.GetOperand())}
+	for _, wc := range ctx.AllWhenClause() {
+		c.WhenClauses = append(c.WhenClauses, *b.visitWhenClause(wc))
+	}
+	if e := ctx.GetElseExpression(); e != nil {
+		c.DefaultValue = b.visitExpression(e)
+	}
+	return c
+}
+
+// VisitSearchedCase mirrors trino AstBuilder.visitSearchedCase.
+func (b *AstBuilder) VisitSearchedCase(ctx *generated.SearchedCaseContext) interface{} {
+	c := &ast.SearchedCaseExpression{}
+	for _, wc := range ctx.AllWhenClause() {
+		c.WhenClauses = append(c.WhenClauses, *b.visitWhenClause(wc))
+	}
+	if e := ctx.GetElseExpression(); e != nil {
+		c.DefaultValue = b.visitExpression(e)
+	}
+	return c
+}
+
+// VisitWhenClause mirrors trino AstBuilder.visitWhenClause.
+func (b *AstBuilder) VisitWhenClause(ctx *generated.WhenClauseContext) interface{} {
+	return &ast.WhenClause{
+		Operand: b.visitExpression(ctx.GetCondition()),
+		Result:  b.visitExpression(ctx.GetResult()),
+	}
+}
+
+// visitWhenClause is a typed helper around VisitWhenClause.
+func (b *AstBuilder) visitWhenClause(tree antlr.ParseTree) *ast.WhenClause {
+	if tree == nil {
+		return nil
+	}
+	return tree.Accept(b).(*ast.WhenClause)
+}
+
+// VisitExtract mirrors trino AstBuilder.visitExtract: the field is upper-cased.
+func (b *AstBuilder) VisitExtract(ctx *generated.ExtractContext) interface{} {
+	return &ast.ExtractExpression{
+		Field:      strings.ToUpper(ctx.Identifier().GetText()),
+		Expression: b.visitExpression(ctx.ValueExpression()),
+	}
+}
+
+// VisitSubscript mirrors trino AstBuilder.visitSubscript.
+func (b *AstBuilder) VisitSubscript(ctx *generated.SubscriptContext) interface{} {
+	return &ast.SubscriptExpression{
+		Base:  b.visitExpression(ctx.GetValue()),
+		Index: b.visitExpression(ctx.GetIndex()),
+	}
+}
+
+// VisitTypeConstructor mirrors trino AstBuilder.visitTypeConstructor: it builds
+// a GenericLiteral such as DATE '1995-01-01'. (DECIMAL keeps a dedicated path
+// in trino; the corpus parses decimals AS_DOUBLE, so DECIMAL is not produced.)
+func (b *AstBuilder) VisitTypeConstructor(ctx *generated.TypeConstructorContext) interface{} {
+	value := stripQuotes(ctx.String_().GetText())
+	typeName := ctx.Identifier().GetText()
+	if ctx.DOUBLE() != nil {
+		typeName = "DOUBLE PRECISION"
+	}
+	return &ast.GenericLiteral{Type: strings.ToUpper(typeName), Value: value}
+}
+
+// stripQuotes removes the surrounding single quotes of a SQL string literal
+// token and unescapes doubled quotes.
+func stripQuotes(s string) string {
+	if len(s) >= 2 && s[0] == '\'' && s[len(s)-1] == '\'' {
+		s = s[1 : len(s)-1]
+	}
+	return strings.ReplaceAll(s, "''", "'")
 }

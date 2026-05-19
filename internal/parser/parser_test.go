@@ -210,13 +210,25 @@ func TestParseLogicalExpressions(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected *ast.NotExpression for first item")
 	}
-	_, ok = qs.Select.SelectItems[1].(*ast.SingleColumn).Expression.(*ast.LogicalBinaryExpression)
+	logicalAnd, ok := qs.Select.SelectItems[1].(*ast.SingleColumn).Expression.(*ast.LogicalExpression)
 	if !ok {
-		t.Fatalf("expected *ast.LogicalBinaryExpression for second item")
+		t.Fatalf("expected *ast.LogicalExpression for second item")
 	}
-	_, ok = qs.Select.SelectItems[2].(*ast.SingleColumn).Expression.(*ast.LogicalBinaryExpression)
+	if logicalAnd.Operator != ast.LogicalAnd {
+		t.Fatalf("expected LogicalAnd, got %s", logicalAnd.Operator)
+	}
+	if len(logicalAnd.Terms) != 2 {
+		t.Fatalf("expected 2 terms, got %d", len(logicalAnd.Terms))
+	}
+	logicalOr, ok := qs.Select.SelectItems[2].(*ast.SingleColumn).Expression.(*ast.LogicalExpression)
 	if !ok {
-		t.Fatalf("expected *ast.LogicalBinaryExpression for third item")
+		t.Fatalf("expected *ast.LogicalExpression for third item")
+	}
+	if logicalOr.Operator != ast.LogicalOr {
+		t.Fatalf("expected LogicalOr, got %s", logicalOr.Operator)
+	}
+	if len(logicalOr.Terms) != 2 {
+		t.Fatalf("expected 2 terms, got %d", len(logicalOr.Terms))
 	}
 }
 
