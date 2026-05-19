@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "cases": {
+    "tpch/1": "oracle-error",
+    "tpch/10": "fail",
+    "tpch/11": "fail",
+    "tpch/12": "fail",
+    "tpch/13": "fail",
+    "tpch/14": "fail",
+    "tpch/15": "fail",
+    "tpch/16": "go-error",
+    "tpch/17": "fail",
+    "tpch/18": "fail",
+    "tpch/19": "fail",
+    "tpch/2": "fail",
+    "tpch/20": "fail",
+    "tpch/21": "fail",
+    "tpch/22": "fail",
+    "tpch/3": "fail",
+    "tpch/4": "oracle-error",
+    "tpch/5": "fail",
+    "tpch/6": "fail",
+    "tpch/7": "go-error",
+    "tpch/8": "go-error",
+    "tpch/9": "fail"
+  }
+}
