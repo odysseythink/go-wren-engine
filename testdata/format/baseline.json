@@ -3,6 +3,7 @@
   "cases": {
     "slice0/select_one.sql": "panic",
     "slice1/bool_null.sql": "panic",
+    "slice1/cast_type.sql": "panic",
     "slice1/double_literal.sql": "panic",
     "slice1/generic_literal.sql": "panic",
     "slice1/ident_delimited.sql": "panic",

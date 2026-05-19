@@ -65,3 +65,13 @@ func (f *formatter) append(indent int, s string) {
 func (f *formatter) indentString(indent int) string {
 	return strings.Repeat(indentUnit, indent)
 }
+
+// formatName joins a qualified name with dots, each part rendered as an
+// expression. Mirrors trino SqlFormatter.formatName.
+func formatName(name ast.QualifiedName, dialect Dialect) string {
+	parts := make([]string, len(name.OriginalParts))
+	for i := range name.OriginalParts {
+		parts[i] = formatExpression(&name.OriginalParts[i], dialect)
+	}
+	return strings.Join(parts, ".")
+}

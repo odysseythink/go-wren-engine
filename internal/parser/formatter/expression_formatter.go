@@ -90,3 +90,29 @@ func formatDouble(v float64, dialect Dialect) string {
 	}
 	return mantissa + "E" + sign + exp
 }
+
+// formatType renders a data type. Mirrors trino ExpressionFormatter
+// .visitGenericDataType: NAME optionally followed by (arg, arg, ...).
+func (e *exprFormatter) formatType(t *ast.DataType) string {
+	result := t.Name
+	if len(t.Parameters) == 0 {
+		return result
+	}
+	parts := make([]string, len(t.Parameters))
+	for i, p := range t.Parameters {
+		parts[i] = e.formatTypeParameter(p)
+	}
+	return result + "(" + strings.Join(parts, ", ") + ")"
+}
+
+// formatTypeParameter renders one type parameter — a nested type or a number.
+func (e *exprFormatter) formatTypeParameter(p ast.DataTypeParameter) string {
+	switch tp := p.(type) {
+	case *ast.TypeParameter:
+		return e.formatType(&tp.Type)
+	case *ast.NumericParameter:
+		return tp.Value
+	default:
+		panic(fmt.Sprintf("ExpressionFormatter: not yet implemented type param: %T", tp))
+	}
+}
