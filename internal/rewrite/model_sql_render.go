@@ -62,7 +62,7 @@ func (r *modelSqlRender) render() (*RelationInfo, error) {
 		if err != nil {
 			return nil, err
 		}
-		return newRelationInfo(model, nil, q), nil
+		return newRelationInfo(model.Name, nil, q), nil
 	}
 
 	// First loop: columns with no relationship and no expression
@@ -101,7 +101,7 @@ func (r *modelSqlRender) render() (*RelationInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("render model %q: %w", model.Name, err)
 	}
-	return newRelationInfo(model, sortedKeys(r.requiredObjects), q), nil
+	return newRelationInfo(model.Name, sortedKeys(r.requiredObjects), q), nil
 }
 
 func (r *modelSqlRender) getQuerySql(selectItemsSql, tableJoinsSql string) string {

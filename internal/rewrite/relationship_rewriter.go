@@ -38,3 +38,35 @@ func toDereferenceExpression(info *analyzer.ExpressionRelationshipInfo) ast.Expr
 	}
 	return dereferenceFrom(parts)
 }
+
+// relationshipAware rewrites relationship dereferences in expr to point at the
+// joined model under relationablePrefix. Mirrors RelationshipRewriter.relationshipAware.
+func relationshipAware(infos []*analyzer.ExpressionRelationshipInfo, relationablePrefix string, expr ast.Expression) ast.Expression {
+	replacements := map[string]ast.Expression{}
+	for _, info := range infos {
+		replacements[info.QualifiedName().String()] = getRelationshipResultAsDereferenceExpression(info, relationablePrefix)
+	}
+	return RewriteNode(expr, func(n ast.Node) (ast.Node, bool) {
+		d, ok := n.(*ast.DereferenceExpression)
+		if !ok {
+			return nil, false // descend
+		}
+		if qn := ast.GetQualifiedName(d); qn != nil {
+			if r, found := replacements[qn.String()]; found {
+				return r, true
+			}
+		}
+		return d, true // matched a dereference but no replacement: stop, unchanged
+	}).(ast.Expression)
+}
+
+// getRelationshipResultAsDereferenceExpression builds "<prefix>.<remainingParts...>"
+// as a delimited dereference chain. Mirrors
+// RelationshipRewriter.getRelationshipResultAsDereferenceExpression.
+func getRelationshipResultAsDereferenceExpression(info *analyzer.ExpressionRelationshipInfo, relationablePrefix string) ast.Expression {
+	parts := []ast.Identifier{{Value: relationablePrefix, Delimited: true}}
+	for _, p := range info.RemainingParts() {
+		parts = append(parts, ast.Identifier{Value: p, Delimited: true})
+	}
+	return dereferenceFrom(parts)
+}
