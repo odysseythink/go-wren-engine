@@ -1,0 +1,3 @@
+SELECT (CASE x WHEN 1 THEN 'one' ELSE 'other' END)
+FROM
+  t

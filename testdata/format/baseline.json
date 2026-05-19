@@ -13,6 +13,10 @@
     "slice2/binary_arith.sql": "panic",
     "slice2/binary_compare.sql": "panic",
     "slice2/binary_not.sql": "panic",
+    "slice2/cast_case_cast.sql": "panic",
+    "slice2/cast_case_misc.sql": "panic",
+    "slice2/cast_case_searched.sql": "panic",
+    "slice2/cast_case_simple.sql": "panic",
     "slice2/function_basic.sql": "panic",
     "slice2/function_filter.sql": "panic",
     "slice2/function_window.sql": "panic"

@@ -1,0 +1,1 @@
+SELECT COALESCE(a, b, 0), NULLIF(a, b)

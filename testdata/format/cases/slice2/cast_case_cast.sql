@@ -1,0 +1,1 @@
+SELECT CAST(x AS bigint), TRY_CAST(y AS varchar)

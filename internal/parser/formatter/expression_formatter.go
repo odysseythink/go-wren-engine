@@ -58,6 +58,28 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 		return "(NOT " + e.process(n.Value) + ")"
 	case *ast.FunctionCall:
 		return e.formatFunctionCall(n)
+	case *ast.Cast:
+		kind := "CAST"
+		if n.Safe {
+			kind = "TRY_CAST"
+		}
+		return kind + "(" + e.process(n.Expression) + " AS " + e.formatType(&n.Type) + ")"
+	case *ast.SearchedCaseExpression:
+		return e.formatSearchedCase(n)
+	case *ast.SimpleCaseExpression:
+		return e.formatSimpleCase(n)
+	case *ast.WhenClause:
+		return "WHEN " + e.process(n.Operand) + " THEN " + e.process(n.Result)
+	case *ast.IfExpression:
+		out := "IF(" + e.process(n.Condition) + ", " + e.process(n.TrueValue)
+		if n.FalseValue != nil {
+			out += ", " + e.process(n.FalseValue)
+		}
+		return out + ")"
+	case *ast.NullIfExpression:
+		return "NULLIF(" + e.process(n.First) + ", " + e.process(n.Second) + ")"
+	case *ast.CoalesceExpression:
+		return "COALESCE(" + e.joinExpressions(n.Operands) + ")"
 	default:
 		panic(fmt.Sprintf("ExpressionFormatter: not yet implemented: %T", n))
 	}
@@ -257,4 +279,32 @@ func (e *exprFormatter) formatFrameBound(b *ast.FrameBound) string {
 	default:
 		panic(fmt.Sprintf("ExpressionFormatter: unhandled frame bound: %q", b.Type))
 	}
+}
+
+// formatSearchedCase renders "(CASE WHEN ... [ELSE ...] END)". Mirrors trino
+// visitSearchedCaseExpression — the whole CASE is wrapped in parentheses.
+func (e *exprFormatter) formatSearchedCase(n *ast.SearchedCaseExpression) string {
+	parts := []string{"CASE"}
+	for i := range n.WhenClauses {
+		parts = append(parts, e.process(&n.WhenClauses[i]))
+	}
+	if n.DefaultValue != nil {
+		parts = append(parts, "ELSE", e.process(n.DefaultValue))
+	}
+	parts = append(parts, "END")
+	return "(" + strings.Join(parts, " ") + ")"
+}
+
+// formatSimpleCase renders "(CASE operand WHEN ... [ELSE ...] END)". Mirrors
+// trino visitSimpleCaseExpression.
+func (e *exprFormatter) formatSimpleCase(n *ast.SimpleCaseExpression) string {
+	parts := []string{"CASE", e.process(n.Operand)}
+	for i := range n.WhenClauses {
+		parts = append(parts, e.process(&n.WhenClauses[i]))
+	}
+	if n.DefaultValue != nil {
+		parts = append(parts, "ELSE", e.process(n.DefaultValue))
+	}
+	parts = append(parts, "END")
+	return "(" + strings.Join(parts, " ") + ")"
 }
