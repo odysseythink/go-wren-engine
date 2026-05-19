@@ -67,6 +67,8 @@ func (f *formatter) process(node ast.Node, indent int) {
 		f.visitFunctionRelation(n)
 	case *ast.Values:
 		f.visitValues(n, indent)
+	case *ast.SetOperation:
+		f.visitSetOperation(n, indent)
 	case *ast.Select:
 		f.visitSelect(n, indent)
 	case *ast.SingleColumn:
@@ -172,7 +174,7 @@ func (f *formatter) visitJoin(n *ast.Join, indent int) {
 	case *ast.JoinUsing:
 		cols := make([]string, len(c.Columns))
 		for i := range c.Columns {
-			cols[i] = c.Columns[i].Value
+			cols[i] = formatExpression(&c.Columns[i], f.dialect)
 		}
 		f.builder.WriteString(" USING (")
 		f.builder.WriteString(strings.Join(cols, ", "))
@@ -398,16 +400,16 @@ func (f *formatter) visitQuery(n *ast.Query, indent int) {
 		if n.With.Recursive {
 			f.builder.WriteString(" RECURSIVE")
 		}
-		f.builder.WriteString("\n  ")
+		f.builder.WriteString("\n")
 		for i := range n.With.Queries {
 			q := &n.With.Queries[i]
-			f.append(indent, formatExpression(q.Name, f.dialect))
+			f.append(indent, "  "+formatExpression(q.Name, f.dialect))
 			f.appendAliasColumns(q.ColumnNames)
 			f.builder.WriteString(" AS ")
 			f.visitTableSubquery(&ast.TableSubquery{Query: q.Query}, indent)
 			f.builder.WriteString("\n")
 			if i < len(n.With.Queries)-1 {
-				f.builder.WriteString(", ")
+				f.append(indent, ", ")
 			}
 		}
 	}
@@ -416,6 +418,22 @@ func (f *formatter) visitQuery(n *ast.Query, indent int) {
 	f.appendOrderBy(n.OrderBy, indent)
 	f.appendOffset(n.Offset, indent)
 	f.appendLimit(n.Limit, indent)
+}
+
+// visitSetOperation mirrors trino SqlFormatter.visitUnion / visitIntersect /
+// visitExcept. N-ary relations are emitted with the operator between each pair.
+func (f *formatter) visitSetOperation(n *ast.SetOperation, indent int) {
+	for i, r := range n.Relations {
+		f.processRelation(r, indent)
+		if i < len(n.Relations)-1 {
+			f.builder.WriteString(n.Operator)
+			if !n.Distinct {
+				f.builder.WriteString("ALL ")
+			} else {
+				f.builder.WriteString(" ")
+			}
+		}
+	}
 }
 
 // processRelation mirrors trino SqlFormatter.processRelation: a bare Table

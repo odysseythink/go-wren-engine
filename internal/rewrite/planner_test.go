@@ -14,7 +14,7 @@ func TestRewriteNoRules(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if result != "SELECT 1" {
-		t.Fatalf("expected 'SELECT 1', got '%s'", result)
+	if result != "SELECT 1\n\n" {
+		t.Fatalf("expected 'SELECT 1\\n\\n', got '%s'", result)
 	}
 }

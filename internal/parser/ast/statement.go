@@ -41,6 +41,25 @@ type QueryBody interface {
 	isQueryBody()
 }
 
+// SetOperation represents UNION / INTERSECT / EXCEPT. Mirrors trino
+// Union/Intersect/Except which all have relations []Relation and distinct bool.
+type SetOperation struct {
+	BaseNode
+	Operator string // "UNION" | "INTERSECT" | "EXCEPT"
+	Distinct bool
+	Relations []Relation
+}
+
+func (s *SetOperation) GetChildren() []Node {
+	children := make([]Node, len(s.Relations))
+	for i, r := range s.Relations {
+		children[i] = r
+	}
+	return children
+}
+func (s *SetOperation) isQueryBody() {}
+func (s *SetOperation) isStatement() {}
+
 // QuerySpecification represents a simple SELECT ... FROM ... WHERE ... query.
 type QuerySpecification struct {
 	BaseNode
@@ -79,6 +98,7 @@ func (qs *QuerySpecification) GetChildren() []Node {
 
 func (qs *QuerySpecification) isQueryBody() {}
 func (qs *QuerySpecification) isStatement() {}
+func (qs *QuerySpecification) isRelation() {}
 
 // GroupBy represents a GROUP BY clause.
 type GroupBy struct {

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -160,6 +161,9 @@ func (b *AstBuilder) VisitQuery(ctx *generated.QueryContext) interface{} {
 func (b *AstBuilder) VisitQueryNoWith(ctx *generated.QueryNoWithContext) interface{} {
 	query := &ast.Query{}
 	body := b.visitStatement(ctx.QueryTerm())
+	if body == nil {
+		panic(fmt.Sprintf("unsupported query term: %T", ctx.QueryTerm()))
+	}
 	if qs, ok := body.(*ast.QuerySpecification); ok {
 		query.Body = qs
 	} else {
@@ -169,8 +173,12 @@ func (b *AstBuilder) VisitQueryNoWith(ctx *generated.QueryNoWithContext) interfa
 		query.OrderBy = append(query.OrderBy, *b.visitSortItem(si))
 	}
 	if ctx.LIMIT() != nil {
-		if ctx.LimitRowCount() != nil && ctx.LimitRowCount().RowCount() != nil {
-			query.Limit = b.visitExpression(ctx.LimitRowCount().RowCount())
+		if ctx.LimitRowCount() != nil {
+			if ctx.LimitRowCount().RowCount() != nil {
+				query.Limit = b.visitExpression(ctx.LimitRowCount().RowCount())
+			} else if ctx.LimitRowCount().ALL() != nil {
+				query.Limit = &ast.Identifier{Value: "ALL"}
+			}
 		} else if len(ctx.AllRowCount()) > 0 {
 			query.Limit = b.visitExpression(ctx.RowCount(0))
 		}
@@ -187,6 +195,26 @@ func (b *AstBuilder) VisitQueryNoWith(ctx *generated.QueryNoWithContext) interfa
 
 func (b *AstBuilder) VisitQueryTermDefault(ctx *generated.QueryTermDefaultContext) interface{} {
 	return b.visit(ctx.QueryPrimary())
+}
+
+func (b *AstBuilder) VisitSetOperation(ctx *generated.SetOperationContext) interface{} {
+	left := b.visitRelation(ctx.QueryTerm(0))
+	right := b.visitRelation(ctx.QueryTerm(1))
+	op := "UNION"
+	if ctx.INTERSECT() != nil {
+		op = "INTERSECT"
+	} else if ctx.EXCEPT() != nil {
+		op = "EXCEPT"
+	}
+	distinct := true
+	if ctx.SetQuantifier() != nil && ctx.SetQuantifier().ALL() != nil {
+		distinct = false
+	}
+	return &ast.SetOperation{
+		Operator:  op,
+		Distinct:  distinct,
+		Relations: []ast.Relation{left, right},
+	}
 }
 
 func (b *AstBuilder) VisitQueryPrimaryDefault(ctx *generated.QueryPrimaryDefaultContext) interface{} {
@@ -396,6 +424,9 @@ func (b *AstBuilder) VisitPredicated(ctx *generated.PredicatedContext) interface
 		pred.Value = value
 		return pred
 	case *ast.IsNullPredicate:
+		pred.Value = value
+		return pred
+	case *ast.QuantifiedComparison:
 		pred.Value = value
 		return pred
 	default:

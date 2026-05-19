@@ -57,6 +57,8 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 			parts[i] = e.process(t)
 		}
 		return "(" + strings.Join(parts, " "+string(n.Operator)+" ") + ")"
+	case *ast.LogicalBinaryExpression:
+		return e.formatBinary(string(n.Operator), n.Left, n.Right)
 	case *ast.NotExpression:
 		return "(NOT " + e.process(n.Value) + ")"
 	case *ast.FunctionCall:
@@ -132,8 +134,14 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 	case *ast.ExistsPredicate:
 		return "(EXISTS (" + FormatSQLDialect(n.Subquery, e.dialect) + "))"
 	case *ast.QuantifiedComparison:
+		subquery := ""
+		if sq, ok := n.Subquery.(*ast.SubqueryExpression); ok {
+			subquery = FormatSQLDialect(sq.Query, e.dialect)
+		} else {
+			subquery = e.process(n.Subquery)
+		}
 		return "(" + e.process(n.Value) + " " + string(n.Operator) + " " +
-			n.Quantifier + " (" + FormatSQLDialect(n.Subquery.(*ast.SubqueryExpression).Query, e.dialect) + "))"
+			n.Quantifier + " (" + subquery + "))"
 	case *ast.StarExpression:
 		return "*"
 	case *ast.IntervalLiteral:
