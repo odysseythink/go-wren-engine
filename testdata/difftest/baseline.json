@@ -22,6 +22,12 @@
     "tpch/6": "pass",
     "tpch/7": "pass",
     "tpch/8": "pass",
-    "tpch/9": "pass"
+    "tpch/9": "pass",
+    "tpch/m_join": "fail",
+    "tpch/m_lineitem": "fail",
+    "tpch/m_lineitem_calc": "fail",
+    "tpch/m_nation": "fail",
+    "tpch/m_orders": "fail",
+    "tpch/m_part": "fail"
   }
 }
