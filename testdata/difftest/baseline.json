@@ -1,6 +1,10 @@
 {
   "version": 1,
   "cases": {
+    "metric/cumulative": "fail",
+    "metric/metric_on_metric": "fail",
+    "metric/metric_on_model": "fail",
+    "metric/rollup": "fail",
     "tpch/1": "oracle-error",
     "tpch/10": "pass",
     "tpch/11": "pass",
@@ -28,6 +32,11 @@
     "tpch/m_lineitem_calc": "pass",
     "tpch/m_nation": "pass",
     "tpch/m_orders": "go-error",
-    "tpch/m_part": "pass"
+    "tpch/m_part": "pass",
+    "tpch/met_customer_revenue": "fail",
+    "tpch/met_daily": "fail",
+    "tpch/met_revenue": "fail",
+    "tpch/met_rollup": "fail",
+    "tpch/met_weekly": "fail"
   }
 }
