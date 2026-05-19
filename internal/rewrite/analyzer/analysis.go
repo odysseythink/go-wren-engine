@@ -18,6 +18,7 @@ type Analysis struct {
 	metrics             []*dto.Metric
 	cumulativeMetrics   []*dto.CumulativeMetric
 	views               []*dto.View
+	metricRollups       map[ast.NodeRef]*MetricRollupInfo
 	collectedColumns    map[CatalogSchemaTableName]map[string]bool
 	referenceFields     map[ast.NodeRef]*Field
 	requiredSourceNodes map[ast.NodeRef]ast.Node
@@ -32,6 +33,7 @@ func NewAnalysis(root ast.Statement) *Analysis {
 		referenceFields:     map[ast.NodeRef]*Field{},
 		requiredSourceNodes: map[ast.NodeRef]ast.Node{},
 		sourceNodeNames:     map[ast.NodeRef]ast.QualifiedName{},
+		metricRollups:       map[ast.NodeRef]*MetricRollupInfo{},
 	}
 }
 
@@ -164,4 +166,21 @@ func (a *Analysis) AddRequiredSourceNode(n ast.Node, source ast.Node) {
 func (a *Analysis) RequiredSourceNode(n ast.Node) (ast.Node, bool) {
 	s, ok := a.requiredSourceNodes[ast.NodeRef{Node: n}]
 	return s, ok
+}
+
+// AddMetricRollups registers a roll_up node's info, keyed by node identity.
+// Mirrors Analysis.addMetricRollups.
+func (a *Analysis) AddMetricRollups(n ast.Node, info *MetricRollupInfo) {
+	a.metricRollups[ast.NodeRef{Node: n}] = info
+}
+
+// MetricRollups returns the node-ref -> info map. Mirrors Analysis.getMetricRollups.
+func (a *Analysis) MetricRollups() map[ast.NodeRef]*MetricRollupInfo {
+	return a.metricRollups
+}
+
+// GetMetricRollup looks up a roll_up node's info by identity.
+func (a *Analysis) GetMetricRollup(n ast.Node) (*MetricRollupInfo, bool) {
+	info, ok := a.metricRollups[ast.NodeRef{Node: n}]
+	return info, ok
 }
