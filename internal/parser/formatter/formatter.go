@@ -57,6 +57,16 @@ func (f *formatter) process(node ast.Node, indent int) {
 		f.visitTableSubquery(n, indent)
 	case *ast.Join:
 		f.visitJoin(n, indent)
+	case *ast.Unnest:
+		f.visitUnnest(n)
+	case *ast.Lateral:
+		f.visitLateral(n, indent)
+	case *ast.SampledRelation:
+		f.visitSampledRelation(n, indent)
+	case *ast.FunctionRelation:
+		f.visitFunctionRelation(n)
+	case *ast.Values:
+		f.visitValues(n, indent)
 	default:
 		panic(fmt.Sprintf("SqlFormatter: not yet implemented: %T", n))
 	}
@@ -165,4 +175,75 @@ func (f *formatter) visitJoin(n *ast.Join, indent int) {
 	default:
 		panic(fmt.Sprintf("SqlFormatter: unknown join criteria: %T", c))
 	}
+}
+
+// visitUnnest mirrors trino SqlFormatter.visitUnnest (DEFAULT dialect).
+func (f *formatter) visitUnnest(n *ast.Unnest) {
+	parts := make([]string, len(n.Expressions))
+	for i, x := range n.Expressions {
+		parts[i] = formatExpression(x, f.dialect)
+	}
+	f.builder.WriteString("UNNEST(")
+	f.builder.WriteString(strings.Join(parts, ", "))
+	f.builder.WriteString(")")
+	if n.Ordinality {
+		f.builder.WriteString(" WITH ORDINALITY")
+	}
+}
+
+// visitLateral mirrors trino SqlFormatter.visitLateral.
+func (f *formatter) visitLateral(n *ast.Lateral, indent int) {
+	f.append(indent, "LATERAL (")
+	f.process(n.Query, indent+1)
+	f.append(indent, ")")
+}
+
+// visitSampledRelation mirrors trino SqlFormatter.visitSampledRelation.
+func (f *formatter) visitSampledRelation(n *ast.SampledRelation, indent int) {
+	f.processRelationSuffix(n.Relation, indent)
+	f.builder.WriteString(" TABLESAMPLE ")
+	f.builder.WriteString(n.SampleType)
+	f.builder.WriteString(" (")
+	f.builder.WriteString(formatExpression(n.SamplePercentage, f.dialect))
+	f.builder.WriteString(")")
+}
+
+// visitFunctionRelation mirrors trino SqlFormatter.visitFunctionRelation.
+func (f *formatter) visitFunctionRelation(n *ast.FunctionRelation) {
+	parts := make([]string, len(n.Arguments))
+	for i, a := range n.Arguments {
+		parts[i] = formatExpression(a, f.dialect)
+	}
+	f.builder.WriteString(formatName(n.Name, f.dialect))
+	f.builder.WriteString("(")
+	f.builder.WriteString(strings.Join(parts, ", "))
+	f.builder.WriteString(")")
+}
+
+// visitValues mirrors trino SqlFormatter.visitValues: each row on its own line.
+func (f *formatter) visitValues(n *ast.Values, indent int) {
+	f.builder.WriteString(" VALUES ")
+	for i, row := range n.Rows {
+		f.builder.WriteString("\n")
+		f.builder.WriteString(f.indentString(indent))
+		if i == 0 {
+			f.builder.WriteString("  ")
+		} else {
+			f.builder.WriteString(", ")
+		}
+		if len(row) == 1 {
+			if r, ok := row[0].(*ast.Row); ok {
+				f.builder.WriteString(formatExpression(r, f.dialect))
+				continue
+			}
+		}
+		parts := make([]string, len(row))
+		for j, x := range row {
+			parts[j] = formatExpression(x, f.dialect)
+		}
+		f.builder.WriteString("(")
+		f.builder.WriteString(strings.Join(parts, ", "))
+		f.builder.WriteString(")")
+	}
+	f.builder.WriteString("\n")
 }

@@ -1,0 +1,3 @@
+SELECT x
+FROM
+  UNNEST(my_array) t (x)

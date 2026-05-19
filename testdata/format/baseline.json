@@ -31,6 +31,8 @@
     "slice3/join_left.sql": "panic",
     "slice3/join_on.sql": "panic",
     "slice3/join_using.sql": "panic",
+    "slice3/rel_unnest.sql": "panic",
+    "slice3/rel_values.sql": "panic",
     "slice3/relation_alias_cols.sql": "panic",
     "slice3/relation_aliased.sql": "panic",
     "slice3/relation_subquery.sql": "panic",
