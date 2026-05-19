@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "cases": {
+    "slice0/select_one.sql": "panic"
+  }
+}
