@@ -67,6 +67,12 @@ func (f *formatter) process(node ast.Node, indent int) {
 		f.visitFunctionRelation(n)
 	case *ast.Values:
 		f.visitValues(n, indent)
+	case *ast.Select:
+		f.visitSelect(n, indent)
+	case *ast.SingleColumn:
+		f.visitSingleColumn(n)
+	case *ast.AllColumns:
+		f.visitAllColumns(n)
 	default:
 		panic(fmt.Sprintf("SqlFormatter: not yet implemented: %T", n))
 	}
@@ -246,4 +252,47 @@ func (f *formatter) visitValues(n *ast.Values, indent int) {
 		f.builder.WriteString(")")
 	}
 	f.builder.WriteString("\n")
+}
+
+// visitSelect mirrors trino SqlFormatter.visitSelect — note the one-column vs
+// multi-column layout fork.
+func (f *formatter) visitSelect(n *ast.Select, indent int) {
+	f.append(indent, "SELECT")
+	if n.Distinct {
+		f.builder.WriteString(" DISTINCT")
+	}
+	if len(n.SelectItems) > 1 {
+		for i, item := range n.SelectItems {
+			f.builder.WriteString("\n")
+			f.builder.WriteString(f.indentString(indent))
+			if i == 0 {
+				f.builder.WriteString("  ")
+			} else {
+				f.builder.WriteString(", ")
+			}
+			f.process(item, indent)
+		}
+	} else {
+		f.builder.WriteString(" ")
+		f.process(n.SelectItems[0], indent)
+	}
+	f.builder.WriteString("\n")
+}
+
+// visitSingleColumn mirrors trino SqlFormatter.visitSingleColumn.
+func (f *formatter) visitSingleColumn(n *ast.SingleColumn) {
+	f.builder.WriteString(formatExpression(n.Expression, f.dialect))
+	if n.Alias != nil {
+		f.builder.WriteString(" ")
+		f.builder.WriteString(formatExpression(n.Alias, f.dialect))
+	}
+}
+
+// visitAllColumns mirrors trino SqlFormatter.visitAllColumns ("t.*" / "*").
+func (f *formatter) visitAllColumns(n *ast.AllColumns) {
+	if n.QualifiedName != nil {
+		f.builder.WriteString(formatName(*n.QualifiedName, f.dialect))
+		f.builder.WriteString(".")
+	}
+	f.builder.WriteString("*")
 }

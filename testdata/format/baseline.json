@@ -36,6 +36,11 @@
     "slice3/relation_alias_cols.sql": "panic",
     "slice3/relation_aliased.sql": "panic",
     "slice3/relation_subquery.sql": "panic",
-    "slice3/relation_table.sql": "panic"
+    "slice3/relation_table.sql": "panic",
+    "slice4/select_alias.sql": "panic",
+    "slice4/select_distinct.sql": "panic",
+    "slice4/select_multi_col.sql": "panic",
+    "slice4/select_one_col.sql": "panic",
+    "slice4/select_star.sql": "panic"
   }
 }

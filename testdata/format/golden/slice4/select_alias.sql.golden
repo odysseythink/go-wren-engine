@@ -1,0 +1,5 @@
+SELECT
+  a x
+, b col2
+FROM
+  t
