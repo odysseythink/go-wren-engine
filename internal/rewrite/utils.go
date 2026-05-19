@@ -3,6 +3,7 @@ package rewrite
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/wren-engine/wren/internal/parser"
 	"github.com/wren-engine/wren/internal/parser/ast"
@@ -50,6 +51,36 @@ func contains(s []string, v string) bool {
 		}
 	}
 	return false
+}
+
+// hasPrefixParts reports whether qn starts with the given prefix parts.
+func hasPrefixParts(qn ast.QualifiedName, prefix ...string) bool {
+	if len(prefix) > len(qn.Parts) {
+		return false
+	}
+	for i, p := range prefix {
+		if !strings.EqualFold(p, qn.Parts[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// dereferenceFrom builds a DereferenceExpression chain (or Identifier) from
+// a slice of identifiers. Mirrors trino DereferenceExpression.from.
+func dereferenceFrom(parts []ast.Identifier) ast.Expression {
+	if len(parts) == 0 {
+		return nil
+	}
+	if len(parts) == 1 {
+		id := parts[0]
+		return &id
+	}
+	result := &ast.DereferenceExpression{
+		Base:  dereferenceFrom(parts[:len(parts)-1]),
+		Field: &parts[len(parts)-1],
+	}
+	return result
 }
 
 // sortedKeys returns the keys of set in ascending order — used to turn a
