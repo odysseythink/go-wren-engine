@@ -19,6 +19,13 @@
     "slice2/cast_case_simple.sql": "panic",
     "slice2/function_basic.sql": "panic",
     "slice2/function_filter.sql": "panic",
-    "slice2/function_window.sql": "panic"
+    "slice2/function_window.sql": "panic",
+    "slice2/predicate_between.sql": "panic",
+    "slice2/predicate_dereference.sql": "panic",
+    "slice2/predicate_exists.sql": "panic",
+    "slice2/predicate_extract.sql": "panic",
+    "slice2/predicate_in.sql": "panic",
+    "slice2/predicate_like.sql": "panic",
+    "slice2/predicate_null.sql": "panic"
   }
 }

@@ -1,0 +1,3 @@
+SELECT EXTRACT(YEAR FROM order_date)
+FROM
+  orders

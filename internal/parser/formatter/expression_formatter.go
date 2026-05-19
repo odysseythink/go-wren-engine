@@ -80,6 +80,47 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 		return "NULLIF(" + e.process(n.First) + ", " + e.process(n.Second) + ")"
 	case *ast.CoalesceExpression:
 		return "COALESCE(" + e.joinExpressions(n.Operands) + ")"
+	case *ast.InPredicate:
+		return "(" + e.process(n.Value) + " IN " + e.process(n.ValueList) + ")"
+	case *ast.InListExpression:
+		return "(" + e.joinExpressions(n.Values) + ")"
+	case *ast.BetweenPredicate:
+		return "(" + e.process(n.Value) + " BETWEEN " +
+			e.process(n.Min) + " AND " + e.process(n.Max) + ")"
+	case *ast.LikePredicate:
+		out := "(" + e.process(n.Value) + " LIKE " + e.process(n.Pattern)
+		if n.Escape != nil {
+			out += " ESCAPE " + e.process(n.Escape)
+		}
+		return out + ")"
+	case *ast.IsNullPredicate:
+		if n.Not {
+			return "(" + e.process(n.Value) + " IS NOT NULL)"
+		}
+		return "(" + e.process(n.Value) + " IS NULL)"
+	case *ast.ExtractExpression:
+		return "EXTRACT(" + n.Field + " FROM " + e.process(n.Expression) + ")"
+	case *ast.SubscriptExpression:
+		return e.process(n.Base) + "[" + e.process(n.Index) + "]"
+	case *ast.Row:
+		return "ROW (" + e.joinExpressions(n.Items) + ")"
+	case *ast.AtTimeZone:
+		return e.process(n.Value) + " AT TIME ZONE " + e.process(n.TimeZone)
+	case *ast.DereferenceExpression:
+		base := e.process(n.Base)
+		if n.Field == nil {
+			return base + ".*"
+		}
+		return base + "." + e.process(n.Field)
+	case *ast.SubqueryExpression:
+		return "(" + FormatSQLDialect(n.Query, e.dialect) + ")"
+	case *ast.ExistsPredicate:
+		return "(EXISTS " + FormatSQLDialect(n.Subquery, e.dialect) + ")"
+	case *ast.QuantifiedComparison:
+		return "(" + e.process(n.Value) + " " + string(n.Operator) + " " +
+			n.Quantifier + " " + e.process(n.Subquery) + ")"
+	case *ast.StarExpression:
+		return "*"
 	default:
 		panic(fmt.Sprintf("ExpressionFormatter: not yet implemented: %T", n))
 	}
