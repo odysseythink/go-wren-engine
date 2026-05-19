@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/wren-engine/wren/internal/dto"
 	"github.com/wren-engine/wren/internal/mdl"
@@ -28,7 +29,38 @@ func Analyze(analysis *Analysis, statement ast.Statement, ctx *base.SessionConte
 		}
 	}
 	analysis.AddModels(models)
-	// metrics / cumulativeMetrics / views: P3a语料无引用，保留对齐Java
+
+	// metrics referenced as plain tables
+	var metrics []*dto.Metric
+	for _, t := range analysis.Tables() {
+		if t.Catalog == wrenMDL.Catalog() && t.Schema == wrenMDL.Schema() {
+			if m, ok := wrenMDL.GetMetric(t.Table); ok {
+				metrics = append(metrics, m)
+			}
+		}
+	}
+	// a metric must not appear both as a table and as a rollup target
+	rollupMetrics := map[string]bool{}
+	for _, info := range analysis.MetricRollups() {
+		rollupMetrics[info.Metric.Name] = true
+	}
+	for _, m := range metrics {
+		if rollupMetrics[m.Name] {
+			return nil, fmt.Errorf("duplicate metrics in metrics and metric rollups")
+		}
+	}
+	analysis.AddMetrics(metrics)
+
+	var cumulativeMetrics []*dto.CumulativeMetric
+	for _, t := range analysis.Tables() {
+		if t.Catalog == wrenMDL.Catalog() && t.Schema == wrenMDL.Schema() {
+			if cm, ok := wrenMDL.GetCumulativeMetric(t.Table); ok {
+				cumulativeMetrics = append(cumulativeMetrics, cm)
+			}
+		}
+	}
+	analysis.AddCumulativeMetrics(cumulativeMetrics)
+
 	return queryScope, nil
 }
 
@@ -161,6 +193,58 @@ func (v *stmtVisitor) visitTable(n *ast.Table, scope *Scope) (*Scope, error) {
 			}
 			rt = NewRelationType(fields)
 		}
+		// metric branch
+		if metric, ok := v.wrenMDL.GetMetric(cstn.Table); ok {
+			var fields []*Field
+			for i := range metric.Dimension {
+				col := &metric.Dimension[i]
+				name := col.Name
+				fields = append(fields, &Field{
+					tableName:         CatalogSchemaTableName{Catalog: v.wrenMDL.Catalog(), Schema: v.wrenMDL.Schema(), Table: metric.Name},
+					columnName:        name,
+					name:              &name,
+					sourceDatasetName: &metric.Name,
+					sourceColumn:      col,
+				})
+			}
+			for i := range metric.Measure {
+				col := &metric.Measure[i]
+				name := col.Name
+				fields = append(fields, &Field{
+					tableName:         CatalogSchemaTableName{Catalog: v.wrenMDL.Catalog(), Schema: v.wrenMDL.Schema(), Table: metric.Name},
+					columnName:        name,
+					name:              &name,
+					sourceDatasetName: &metric.Name,
+					sourceColumn:      col,
+				})
+			}
+			v.analysis.AddCollectedColumns(fields)
+			rt = NewRelationType(fields)
+		}
+		// cumulative metric branch
+		if cm, ok := v.wrenMDL.GetCumulativeMetric(cstn.Table); ok {
+			var fields []*Field
+			windowCol := cm.Window.ToColumn()
+			name := windowCol.Name
+			fields = append(fields, &Field{
+				tableName:         CatalogSchemaTableName{Catalog: v.wrenMDL.Catalog(), Schema: v.wrenMDL.Schema(), Table: cm.Name},
+				columnName:        name,
+				name:              &name,
+				sourceDatasetName: &cm.Name,
+				sourceColumn:      &windowCol,
+			})
+			measureCol := cm.Measure.ToColumn()
+			name = measureCol.Name
+			fields = append(fields, &Field{
+				tableName:         CatalogSchemaTableName{Catalog: v.wrenMDL.Catalog(), Schema: v.wrenMDL.Schema(), Table: cm.Name},
+				columnName:        name,
+				name:              &name,
+				sourceDatasetName: &cm.Name,
+				sourceColumn:      &measureCol,
+			})
+			v.analysis.AddCollectedColumns(fields)
+			rt = NewRelationType(fields)
+		}
 	}
 
 	return v.createAndAssignScope(n, ScopeBuilderWithParent(scope).RelationId(RelationIdOf(n)).RelationType(rt).Build()), nil
@@ -233,6 +317,47 @@ func (v *stmtVisitor) visitUnnest(n *ast.Unnest, scope *Scope) (*Scope, error) {
 }
 
 func (v *stmtVisitor) visitFunctionRelation(n *ast.FunctionRelation, scope *Scope) (*Scope, error) {
+	if strings.EqualFold(n.Name.String(), "roll_up") {
+		args := n.Arguments
+		if len(args) != 3 {
+			return nil, fmt.Errorf("rollup function should have 3 arguments")
+		}
+		tableName := ast.GetQualifiedName(args[0])
+		if tableName == nil {
+			return nil, fmt.Errorf("'%v' cannot be resolved", args[0])
+		}
+		timeId, ok1 := args[1].(*ast.Identifier)
+		if !ok1 {
+			return nil, fmt.Errorf("'%v' cannot be resolved", args[1])
+		}
+		unitId, ok2 := args[2].(*ast.Identifier)
+		if !ok2 {
+			return nil, fmt.Errorf("'%v' cannot be resolved", args[2])
+		}
+		cstn, err := toCatalogSchemaTableName(v.ctx, *tableName)
+		if err != nil {
+			return nil, err
+		}
+		var metric *dto.Metric
+		if cstn.Catalog == v.wrenMDL.Catalog() && cstn.Schema == v.wrenMDL.Schema() {
+			if m, found := v.wrenMDL.GetMetric(cstn.Table); found {
+				metric = m
+			}
+		}
+		if metric == nil {
+			return nil, fmt.Errorf("Metric not found: %s.%s.%s", cstn.Catalog, cstn.Schema, cstn.Table)
+		}
+		timeGrain, found := metric.GetTimeGrain(timeId.Value)
+		if !found {
+			return nil, fmt.Errorf("Time column not found in metric: %s", timeId.Value)
+		}
+		unit, err := dto.ParseTimeUnit(unitId.Value)
+		if err != nil {
+			return nil, err
+		}
+		v.analysis.AddMetricRollups(n, &MetricRollupInfo{Metric: metric, TimeGrain: timeGrain, TimeUnit: unit})
+		return v.createAndAssignScope(n, ScopeBuilderWithParent(scope).Build()), nil
+	}
 	for _, arg := range n.Arguments {
 		v.analyzeExpression(scope, arg)
 	}

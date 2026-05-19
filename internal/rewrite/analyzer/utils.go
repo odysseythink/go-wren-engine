@@ -97,6 +97,17 @@ func sortedModels(wrenMDL *mdl.WrenMDL) []*dto.Model {
 	return models
 }
 
+// sortedMetrics returns metrics sorted by name.
+func sortedMetrics(wrenMDL *mdl.WrenMDL) []*dto.Metric {
+	manifest := wrenMDL.Manifest()
+	metrics := make([]*dto.Metric, len(manifest.Metrics))
+	for i := range manifest.Metrics {
+		metrics[i] = &manifest.Metrics[i]
+	}
+	sort.Slice(metrics, func(i, j int) bool { return metrics[i].Name < metrics[j].Name })
+	return metrics
+}
+
 // usedContains reports whether the used relations contain the given model name.
 func usedContains(used []Relation, modelName string) bool {
 	for _, r := range used {
@@ -134,6 +145,16 @@ func AnalyzeFrom(wrenMDL *mdl.WrenMDL, ctx *base.SessionContext, node ast.Relati
 			fields = append(fields, toField(wrenMDL, model.Name, &model.Columns[i], used))
 		}
 	}
-	// metrics: P3a语料无metric引用，保留对齐Java但暂不遍历
+	for _, metric := range sortedMetrics(wrenMDL) {
+		if !usedContains(used, metric.Name) {
+			continue
+		}
+		for i := range metric.Dimension {
+			fields = append(fields, toField(wrenMDL, metric.Name, &metric.Dimension[i], used))
+		}
+		for i := range metric.Measure {
+			fields = append(fields, toField(wrenMDL, metric.Name, &metric.Measure[i], used))
+		}
+	}
 	return ScopeBuilderWithParent(parent).RelationType(NewRelationType(fields)).Build()
 }
