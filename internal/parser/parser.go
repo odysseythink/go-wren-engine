@@ -67,3 +67,29 @@ func ParseExpression(sql string) (ast.Expression, error) {
 	}
 	return expr, nil
 }
+
+// LexToken is a single lexical token: its lexer token type and source text.
+// Type values are the generated.SqlBaseLexer* constants.
+type LexToken struct {
+	Type int
+	Text string
+}
+
+// LexTokens tokenizes sql into default-channel tokens. Whitespace and comment
+// tokens (which the grammar routes to the hidden channel) are excluded.
+// Lexing is case-insensitive for keyword matching, matching ParseSQL.
+func LexTokens(sql string) []LexToken {
+	lexer := generated.NewSqlBaseLexer(newCaseInsensitiveStream(sql))
+	var toks []LexToken
+	for {
+		t := lexer.NextToken()
+		if t.GetTokenType() == antlr.TokenEOF {
+			break
+		}
+		if t.GetChannel() != antlr.TokenDefaultChannel {
+			continue
+		}
+		toks = append(toks, LexToken{Type: t.GetTokenType(), Text: t.GetText()})
+	}
+	return toks
+}
