@@ -73,6 +73,8 @@ func (f *formatter) process(node ast.Node, indent int) {
 		f.visitSingleColumn(n)
 	case *ast.AllColumns:
 		f.visitAllColumns(n)
+	case *ast.QuerySpecification:
+		f.visitQuerySpecification(n, indent)
 	default:
 		panic(fmt.Sprintf("SqlFormatter: not yet implemented: %T", n))
 	}
@@ -295,4 +297,94 @@ func (f *formatter) visitAllColumns(n *ast.AllColumns) {
 		f.builder.WriteString(".")
 	}
 	f.builder.WriteString("*")
+}
+
+// visitQuerySpecification mirrors trino SqlFormatter.visitQuerySpecification.
+func (f *formatter) visitQuerySpecification(n *ast.QuerySpecification, indent int) {
+	f.process(n.Select, indent)
+
+	if n.From != nil {
+		f.append(indent, "FROM")
+		f.builder.WriteString("\n")
+		f.append(indent, "  ")
+		f.process(n.From, indent)
+	}
+	f.builder.WriteString("\n")
+
+	if n.Where != nil {
+		f.append(indent, "WHERE "+formatExpression(n.Where, f.dialect))
+		f.builder.WriteString("\n")
+	}
+	if n.GroupBy != nil {
+		f.append(indent, "GROUP BY "+f.formatGroupBy(n.GroupBy))
+		f.builder.WriteString("\n")
+	}
+	if n.Having != nil {
+		f.append(indent, "HAVING "+formatExpression(n.Having, f.dialect))
+		f.builder.WriteString("\n")
+	}
+
+	f.appendOrderBy(n.OrderBy, indent)
+	f.appendOffset(n.Offset, indent)
+	f.appendLimit(n.Limit, indent)
+}
+
+// appendOrderBy emits an ORDER BY line when items is non-empty. Mirrors trino
+// SqlFormatter.visitOrderBy.
+func (f *formatter) appendOrderBy(items []ast.SortItem, indent int) {
+	if len(items) == 0 {
+		return
+	}
+	ef := &exprFormatter{dialect: f.dialect}
+	f.append(indent, ef.formatOrderBy(items))
+	f.builder.WriteString("\n")
+}
+
+// appendOffset emits an OFFSET line. Mirrors trino SqlFormatter.visitOffset
+// (DEFAULT dialect: an extra "ROWS" line follows).
+func (f *formatter) appendOffset(offset ast.Expression, indent int) {
+	if offset == nil {
+		return
+	}
+	f.append(indent, "OFFSET "+formatExpression(offset, f.dialect))
+	f.builder.WriteString("\n")
+	f.append(indent, "ROWS\n")
+}
+
+// appendLimit emits a LIMIT line. Mirrors trino SqlFormatter.visitLimit.
+func (f *formatter) appendLimit(limit ast.Expression, indent int) {
+	if limit == nil {
+		return
+	}
+	f.append(indent, "LIMIT "+formatExpression(limit, f.dialect))
+	f.builder.WriteString("\n")
+}
+
+// formatGroupBy renders the grouping elements. Mirrors trino formatGroupBy.
+// The Go AST GroupBy carries Expressions plus a Sets flag (true for GROUPING
+// SETS); Cube/Rollup are not in the P2 corpus.
+func (f *formatter) formatGroupBy(g *ast.GroupBy) string {
+	ef := &exprFormatter{dialect: f.dialect}
+	if !g.Sets {
+		parts := make([]string, len(g.Expressions))
+		for i, x := range g.Expressions {
+			parts[i] = ef.process(x)
+		}
+		return strings.Join(parts, ", ")
+	}
+	// GROUPING SETS: each element is itself a parenthesized list. The Go AST
+	// models each set as a *Row of its grouping columns.
+	sets := make([]string, len(g.Expressions))
+	for i, x := range g.Expressions {
+		if r, ok := x.(*ast.Row); ok {
+			cols := make([]string, len(r.Items))
+			for j, it := range r.Items {
+				cols[j] = ef.process(it)
+			}
+			sets[i] = "(" + strings.Join(cols, ", ") + ")"
+		} else {
+			sets[i] = "(" + ef.process(x) + ")"
+		}
+	}
+	return "GROUPING SETS (" + strings.Join(sets, ", ") + ")"
 }
