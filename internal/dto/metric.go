@@ -42,6 +42,16 @@ func (m Metric) IsCached() bool        { return m.Cached }
 func (m Metric) GetColumns() []Column  { return append(m.Dimension, m.Measure...) }
 func (m Metric) GetBaseObject() string { return m.BaseObject }
 
+// GetTimeGrain returns the time grain named name. Mirrors Java Metric.getTimeGrain(String).
+func (m Metric) GetTimeGrain(name string) (TimeGrain, bool) {
+	for _, tg := range m.TimeGrain {
+		if tg.Name == name {
+			return tg, true
+		}
+	}
+	return TimeGrain{}, false
+}
+
 // CumulativeMetric represents a cumulative metric.
 type CumulativeMetric struct {
 	Name        string            `json:"name"`
@@ -54,3 +64,13 @@ type CumulativeMetric struct {
 }
 
 func (c CumulativeMetric) IsCached() bool { return c.Cached }
+
+// ToColumn projects the window into a timestamp Column. Mirrors Java Window.toColumn.
+func (w Window) ToColumn() Column {
+	return Column{Name: w.Name, Type: "TIMESTAMP", Expression: w.RefColumn, Properties: w.Properties}
+}
+
+// ToColumn projects the measure into a Column. Mirrors Java Measure.toColumn.
+func (ms Measure) ToColumn() Column {
+	return Column{Name: ms.Name, Type: ms.Type, Expression: ms.RefColumn, Properties: ms.Properties}
+}

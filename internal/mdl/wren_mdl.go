@@ -157,3 +157,9 @@ func (m *WrenMDL) IsObjectExist(name string) bool {
 	_, ok = m.views[name]
 	return ok
 }
+
+// GetDateSpine returns the manifest's date spine (defaulted at manifest load).
+// Mirrors Java WrenMDL.getDateSpine.
+func (m *WrenMDL) GetDateSpine() dto.DateSpine {
+	return m.manifest.DateSpine
+}
