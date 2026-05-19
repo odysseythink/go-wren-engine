@@ -140,16 +140,30 @@ func (v *stmtVisitor) visitTable(n *ast.Table, scope *Scope) (*Scope, error) {
 	}
 	v.analysis.AddTable(cstn)
 
+	var rt *RelationType
 	// If catalog+schema match MDL, register source node name and collect fields
 	if cstn.Catalog == v.wrenMDL.Catalog() && cstn.Schema == v.wrenMDL.Schema() {
 		v.analysis.AddSourceNodeName(n, ast.QualifiedNameOf(cstn.Table))
 		model, ok := v.wrenMDL.GetModel(cstn.Table)
 		if ok {
 			v.collectFieldFromMDL(n, model)
+			var fields []*Field
+			for i := range model.Columns {
+				col := &model.Columns[i]
+				name := col.Name
+				fields = append(fields, &Field{
+					tableName:         CatalogSchemaTableName{Catalog: v.wrenMDL.Catalog(), Schema: v.wrenMDL.Schema(), Table: model.Name},
+					columnName:        name,
+					name:              &name,
+					sourceDatasetName: &model.Name,
+					sourceColumn:      col,
+				})
+			}
+			rt = NewRelationType(fields)
 		}
 	}
 
-	return v.createAndAssignScope(n, ScopeBuilderWithParent(scope).RelationId(RelationIdOf(n)).Build()), nil
+	return v.createAndAssignScope(n, ScopeBuilderWithParent(scope).RelationId(RelationIdOf(n)).RelationType(rt).Build()), nil
 }
 
 func (v *stmtVisitor) visitJoin(n *ast.Join, scope *Scope) (*Scope, error) {
@@ -238,6 +252,11 @@ func (v *stmtVisitor) analyzeWith(w *ast.With, scope *Scope) error {
 	for i := range w.Queries {
 		q := &w.Queries[i]
 		namedQueries[q.Name.Value] = q
+		// Recursively analyze CTE bodies so model references inside WITH
+		// clauses are detected and expanded ( mirrors Java StatementAnalyzer ).
+		if _, err := v.process(q.Query, scope); err != nil {
+			return err
+		}
 	}
 	scope.namedQueries = namedQueries
 	return nil

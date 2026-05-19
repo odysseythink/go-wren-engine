@@ -25,5 +25,9 @@ func (r *RelationInfo) Query() *ast.Query          { return r.query }
 // relationInfoOfModel renders a model into a RelationInfo. Mirrors
 // RelationInfo.get(Relationable, WrenMDL) for the Model case.
 func relationInfoOfModel(model *dto.Model, wrenMDL *mdl.WrenMDL) (*RelationInfo, error) {
-	return newModelSqlRender(model, wrenMDL).render()
+	r, err := newModelSqlRender(model, wrenMDL)
+	if err != nil {
+		return nil, err
+	}
+	return r.render()
 }

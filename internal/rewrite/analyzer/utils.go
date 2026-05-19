@@ -120,6 +120,8 @@ func toField(wrenMDL *mdl.WrenMDL, modelName string, column *dto.Column, used []
 }
 
 // AnalyzeFrom builds a Scope for a FROM relation. Mirrors Utils.analyzeFrom.
+// Called by ScopeAnalyzer (indirectly via AnalyzeScope); P3b will add metric
+// dimension/measure fields here.
 func AnalyzeFrom(wrenMDL *mdl.WrenMDL, ctx *base.SessionContext, node ast.Relation, parent *Scope) *Scope {
 	scopeAnalysis := AnalyzeScope(wrenMDL, node, ctx)
 	used := scopeAnalysis.UsedWrenObjects()

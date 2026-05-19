@@ -80,12 +80,13 @@ func (v *exprVisitor) process(expr ast.Expression) {
 
 	case *ast.SubqueryExpression:
 		if _, err := Analyze(v.analysis, n.Query, v.ctx, v.wrenMDL); err != nil {
-			// Java throws unchecked; we silently continue to match behavior
+			// TODO: propagate error once process() returns error.
+			// Java throws unchecked; Go cannot, so we silently skip.
 		}
 
 	case *ast.ExistsPredicate:
 		if _, err := Analyze(v.analysis, n.Subquery, v.ctx, v.wrenMDL); err != nil {
-			// silently continue
+			// TODO: propagate error once process() returns error.
 		}
 
 	case *ast.InPredicate:

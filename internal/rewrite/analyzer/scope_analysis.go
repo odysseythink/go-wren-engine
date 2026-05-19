@@ -6,7 +6,9 @@ import "github.com/wren-engine/wren/internal/parser/ast"
 // Mirrors analyzer.ScopeAnalysis.
 type ScopeAnalysis struct {
 	usedWrenObjects []Relation
-	aliasedMap      map[ast.NodeRef]string
+	// TODO: aliasedMap is populated but not yet read in P3a.
+	// It will be used when relationship-aware alias resolution is needed.
+	aliasedMap map[ast.NodeRef]string
 }
 
 // Relation identifies a used Wren object with its optional alias.

@@ -23,11 +23,11 @@
     "tpch/7": "pass",
     "tpch/8": "pass",
     "tpch/9": "pass",
-    "tpch/m_join": "fail",
-    "tpch/m_lineitem": "fail",
-    "tpch/m_lineitem_calc": "fail",
-    "tpch/m_nation": "fail",
-    "tpch/m_orders": "fail",
-    "tpch/m_part": "fail"
+    "tpch/m_join": "pass",
+    "tpch/m_lineitem": "pass",
+    "tpch/m_lineitem_calc": "pass",
+    "tpch/m_nation": "pass",
+    "tpch/m_orders": "go-error",
+    "tpch/m_part": "pass"
   }
 }

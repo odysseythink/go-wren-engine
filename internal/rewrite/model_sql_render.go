@@ -17,36 +17,42 @@ type modelSqlRender struct {
 	requiredFields map[string]bool
 }
 
-func newModelSqlRender(model *dto.Model, wrenMDL *mdl.WrenMDL) *modelSqlRender {
+func newModelSqlRender(model *dto.Model, wrenMDL *mdl.WrenMDL) (*modelSqlRender, error) {
 	requiredFields := map[string]bool{}
 	for i := range model.Columns {
 		requiredFields[model.Columns[i].Name] = true
+	}
+	refSql, err := initRefSql(model)
+	if err != nil {
+		return nil, err
 	}
 	return &modelSqlRender{
 		relationableSqlRender: relationableSqlRender{
 			relationable:               model,
 			mdl:                        wrenMDL,
-			refSql:                     initRefSql(model),
+			refSql:                     refSql,
 			requiredObjects:            map[string]bool{},
 			selectItems:                []string{},
 			calculatedRequiredRelationshipInfos: []*calculatedFieldRelationshipInfo{},
 			calculatedScopeSelectItems: newOrderedMap(),
 		},
 		requiredFields: requiredFields,
-	}
+	}, nil
 }
 
-func initRefSql(model *dto.Model) string {
+func initRefSql(model *dto.Model) (string, error) {
 	if model.RefSql != "" {
-		return "(" + model.RefSql + ")"
+		return "(" + model.RefSql + ")", nil
 	}
+	// Use model.BaseObject directly (not GetBaseObject) because GetBaseObject
+	// returns model.Name for refSql models, creating a self-dependency cycle.
 	if model.BaseObject != "" {
-		return fmt.Sprintf(`(SELECT * FROM "%s")`, model.BaseObject)
+		return fmt.Sprintf(`(SELECT * FROM "%s")`, model.BaseObject), nil
 	}
 	if model.TableReference != nil {
-		return model.TableReference.ToQualifiedName()
+		return model.TableReference.ToQualifiedName(), nil
 	}
-	panic(fmt.Sprintf("cannot get reference sql from model %s", model.Name))
+	return "", fmt.Errorf("cannot get reference sql from model %s", model.Name)
 }
 
 func (r *modelSqlRender) render() (*RelationInfo, error) {
@@ -283,6 +289,11 @@ func (r *modelSqlRender) getBaseModelSql(model *dto.Model) string {
 		if !col.IsCalculated && col.Relationship == "" {
 			cols = append(cols, fmt.Sprintf("%s AS \"%s\"", col.GetExpression(), col.Name))
 		}
+	}
+	if len(cols) == 0 {
+		// All columns are calculated or relationships; select primary key so
+		// JOINs and subqueries still have an anchor column.
+		cols = append(cols, fmt.Sprintf(`"%s"."%s"`, model.Name, model.PrimaryKey))
 	}
 	return fmt.Sprintf("SELECT %s FROM %s AS \"%s\"", strings.Join(cols, ", "), r.refSql, model.Name)
 }

@@ -52,10 +52,14 @@ func (b *ScopeBuilder) NamedQueries(q map[string]*ast.WithQuery) *ScopeBuilder {
 
 // Build creates the Scope.
 func (b *ScopeBuilder) Build() *Scope {
+	rt := b.relationType
+	if rt == nil {
+		rt = NewRelationType(nil)
+	}
 	return &Scope{
 		parent:           b.parent,
 		relationId:       b.relationId,
-		relationType:     b.relationType,
+		relationType:     rt,
 		isDataSourceScope: b.isDataSourceScope,
 		namedQueries:     b.namedQueries,
 	}
