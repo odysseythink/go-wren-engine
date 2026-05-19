@@ -27,7 +27,7 @@ type TypeParameter struct {
 	Type DataType
 }
 
-func (t *TypeParameter) GetChildren() []Node        { return []Node{&t.Type} }
+func (t *TypeParameter) GetChildren() []Node  { return []Node{&t.Type} }
 func (t *TypeParameter) isDataTypeParameter() {}
 
 // NumericParameter wraps a number as a type parameter.
@@ -36,7 +36,7 @@ type NumericParameter struct {
 	Value string
 }
 
-func (n *NumericParameter) GetChildren() []Node        { return nil }
+func (n *NumericParameter) GetChildren() []Node  { return nil }
 func (n *NumericParameter) isDataTypeParameter() {}
 
 // ColumnDefinition represents a column definition in CREATE TABLE.

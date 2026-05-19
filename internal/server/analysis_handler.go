@@ -29,8 +29,8 @@ type SqlAnalysisInputDtoV2 struct {
 
 // SqlAnalysisInputBatchDto represents batch SQL analysis input.
 type SqlAnalysisInputBatchDto struct {
-	Manifest *json.RawMessage   `json:"manifest"`
-	SQLs     []string           `json:"sqls"`
+	Manifest *json.RawMessage `json:"manifest"`
+	SQLs     []string         `json:"sqls"`
 }
 
 // QueryAnalysisDto represents query analysis output.

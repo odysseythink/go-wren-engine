@@ -2,8 +2,8 @@ package dto
 
 // TimeGrain represents a time grain for metrics.
 type TimeGrain struct {
-	Name      string   `json:"name"`
-	RefColumn string   `json:"refColumn"`
+	Name      string     `json:"name"`
+	RefColumn string     `json:"refColumn"`
 	DateParts []TimeUnit `json:"dateParts,omitempty"`
 }
 
@@ -38,8 +38,8 @@ type Metric struct {
 	Properties  map[string]string `json:"properties,omitempty"`
 }
 
-func (m Metric) IsCached() bool      { return m.Cached }
-func (m Metric) GetColumns() []Column { return append(m.Dimension, m.Measure...) }
+func (m Metric) IsCached() bool        { return m.Cached }
+func (m Metric) GetColumns() []Column  { return append(m.Dimension, m.Measure...) }
 func (m Metric) GetBaseObject() string { return m.BaseObject }
 
 // CumulativeMetric represents a cumulative metric.

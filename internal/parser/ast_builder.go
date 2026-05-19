@@ -186,7 +186,6 @@ func (b *AstBuilder) VisitQueryNoWith(ctx *generated.QueryNoWithContext) interfa
 	return qs
 }
 
-
 func (b *AstBuilder) VisitQueryTermDefault(ctx *generated.QueryTermDefaultContext) interface{} {
 	return b.visit(ctx.QueryPrimary())
 }
@@ -371,7 +370,6 @@ func (b *AstBuilder) VisitParenthesizedRelation(ctx *generated.ParenthesizedRela
 	return b.visitRelation(ctx.Relation())
 }
 
-
 // --------------------------------------------------------------------------
 // Boolean Expressions
 // --------------------------------------------------------------------------
@@ -473,9 +471,9 @@ func (b *AstBuilder) VisitComparison(ctx *generated.ComparisonContext) interface
 func (b *AstBuilder) VisitBetween(ctx *generated.BetweenContext) interface{} {
 	values := ctx.AllValueExpression()
 	return &ast.BetweenPredicate{
-		Min:  values[len(values)-2].Accept(b).(ast.Expression),
-		Max:  values[len(values)-1].Accept(b).(ast.Expression),
-		Not:  ctx.NOT() != nil,
+		Min: values[len(values)-2].Accept(b).(ast.Expression),
+		Max: values[len(values)-1].Accept(b).(ast.Expression),
+		Not: ctx.NOT() != nil,
 	}
 }
 

@@ -38,9 +38,9 @@ func GenericJoinType(j JoinType) string {
 
 // SortKey represents a sort key for the many side of a relationship.
 type SortKey struct {
-	Name        string `json:"name"`
-	Ordering    string `json:"ordering,omitempty"`
-	IsDescending bool  `json:"isDescending"`
+	Name         string `json:"name"`
+	Ordering     string `json:"ordering,omitempty"`
+	IsDescending bool   `json:"isDescending"`
 }
 
 // Relationship represents a relationship between models.

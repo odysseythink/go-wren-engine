@@ -29,7 +29,7 @@ func TestWrenMDLFromManifest(t *testing.T) {
 
 func TestIsObjectExist(t *testing.T) {
 	manifest := &dto.Manifest{
-		Models: []dto.Model{{Name: "orders"}},
+		Models:  []dto.Model{{Name: "orders"}},
 		Metrics: []dto.Metric{{Name: "total_sales"}},
 	}
 	mdl := WrenMDLFromManifest(manifest)
