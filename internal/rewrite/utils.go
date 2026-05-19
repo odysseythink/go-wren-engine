@@ -1,0 +1,64 @@
+package rewrite
+
+import (
+	"fmt"
+	"sort"
+
+	"github.com/wren-engine/wren/internal/parser"
+	"github.com/wren-engine/wren/internal/parser/ast"
+)
+
+// parseSQL parses a statement. Mirrors Java Utils.parseSql.
+func parseSQL(sql string) (ast.Statement, error) {
+	return parser.ParseSQL(sql)
+}
+
+// parseExpression parses a standalone expression. Mirrors Java Utils.parseExpression.
+func parseExpression(sql string) (ast.Expression, error) {
+	return parser.ParseExpression(sql)
+}
+
+// parseQuery parses sql and asserts the result is a *ast.Query.
+// Mirrors Java Utils.parseQuery.
+func parseQuery(sql string) (*ast.Query, error) {
+	stmt, err := parseSQL(sql)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse query: %s: %w", sql, err)
+	}
+	q, ok := stmt.(*ast.Query)
+	if !ok {
+		return nil, fmt.Errorf("not a query: %s", sql)
+	}
+	return q, nil
+}
+
+// checkArgument returns a formatted error when cond is false.
+// Mirrors Java com.google.common.base.Preconditions.checkArgument.
+func checkArgument(cond bool, format string, args ...any) error {
+	if cond {
+		return nil
+	}
+	return fmt.Errorf(format, args...)
+}
+
+// contains reports whether s holds v. Shared helper used by the graph and the
+// SqlRender tests.
+func contains(s []string, v string) bool {
+	for _, x := range s {
+		if x == v {
+			return true
+		}
+	}
+	return false
+}
+
+// sortedKeys returns the keys of set in ascending order — used to turn a
+// requiredObjects set into a deterministic slice (risk #1).
+func sortedKeys(set map[string]bool) []string {
+	out := make([]string, 0, len(set))
+	for k := range set {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}

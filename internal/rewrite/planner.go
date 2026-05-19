@@ -1,13 +1,15 @@
 package rewrite
 
 import (
-	"github.com/wren-engine/wren/internal/analyzer"
+	"fmt"
+
 	"github.com/wren-engine/wren/internal/mdl"
-	"github.com/wren-engine/wren/internal/parser"
 	"github.com/wren-engine/wren/internal/parser/formatter"
+
+	base "github.com/wren-engine/wren/internal/analyzer"
 )
 
-// AllRules is the list of all rewrite rules applied sequentially.
+// AllRules is the ordered rule pipeline. Mirrors Java WrenPlanner.ALL_RULES.
 var AllRules = []WrenRule{
 	&GenerateViewRewrite{},
 	&MetricRollupRewrite{},
@@ -15,19 +17,22 @@ var AllRules = []WrenRule{
 	&EnumRewrite{},
 }
 
-// Rewrite applies all rewrite rules to the SQL.
-func Rewrite(sql string, ctx *analyzer.SessionContext, analyzedMDL *mdl.AnalyzedMDL) (string, error) {
-	stmt, err := parser.ParseSQL(sql)
+// Rewrite applies every rule in order, re-parsing the formatted SQL between
+// rules so rules cannot interfere. Mirrors Java WrenPlanner.rewrite.
+func Rewrite(sql string, sessionContext *base.SessionContext, analyzedMDL *mdl.AnalyzedMDL) (string, error) {
+	statement, err := parseSQL(sql)
 	if err != nil {
 		return "", err
 	}
 	for _, rule := range AllRules {
-		sql = formatter.FormatSQL(stmt)
-		stmt, err = parser.ParseSQL(sql)
+		reparsed, err := parseSQL(formatter.FormatSQL(statement))
+		if err != nil {
+			return "", fmt.Errorf("re-parse before %T: %w", rule, err)
+		}
+		statement, err = rule.Apply(reparsed, sessionContext, analyzedMDL)
 		if err != nil {
 			return "", err
 		}
-		stmt = rule.Apply(stmt, ctx, analyzedMDL)
 	}
-	return formatter.FormatSQL(stmt), nil
+	return formatter.FormatSQL(statement), nil
 }
