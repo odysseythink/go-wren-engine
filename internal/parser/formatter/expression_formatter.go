@@ -44,6 +44,18 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 		return "false"
 	case *ast.NullLiteral:
 		return "null"
+	case *ast.ComparisonExpression:
+		return e.formatBinary(string(n.Operator), n.Left, n.Right)
+	case *ast.ArithmeticBinaryExpression:
+		return e.formatBinary(string(n.Operator), n.Left, n.Right)
+	case *ast.LogicalExpression:
+		parts := make([]string, len(n.Terms))
+		for i, t := range n.Terms {
+			parts[i] = e.process(t)
+		}
+		return "(" + strings.Join(parts, " "+string(n.Operator)+" ") + ")"
+	case *ast.NotExpression:
+		return "(NOT " + e.process(n.Value) + ")"
 	default:
 		panic(fmt.Sprintf("ExpressionFormatter: not yet implemented: %T", n))
 	}
@@ -115,4 +127,10 @@ func (e *exprFormatter) formatTypeParameter(p ast.DataTypeParameter) string {
 	default:
 		panic(fmt.Sprintf("ExpressionFormatter: not yet implemented type param: %T", tp))
 	}
+}
+
+// formatBinary renders a binary expression fully parenthesized:
+// '(' left ' ' op ' ' right ')'. Mirrors trino formatBinaryExpression.
+func (e *exprFormatter) formatBinary(op string, left, right ast.Expression) string {
+	return "(" + e.process(left) + " " + op + " " + e.process(right) + ")"
 }

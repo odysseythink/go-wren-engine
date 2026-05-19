@@ -1,0 +1,1 @@
+SELECT a FROM t WHERE NOT x = 1

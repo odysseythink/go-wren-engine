@@ -9,6 +9,9 @@
     "slice1/ident_delimited.sql": "panic",
     "slice1/ident_plain.sql": "panic",
     "slice1/long_literal.sql": "panic",
-    "slice1/string_literal.sql": "panic"
+    "slice1/string_literal.sql": "panic",
+    "slice2/binary_arith.sql": "panic",
+    "slice2/binary_compare.sql": "panic",
+    "slice2/binary_not.sql": "panic"
   }
 }
