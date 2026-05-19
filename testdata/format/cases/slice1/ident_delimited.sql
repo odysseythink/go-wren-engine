@@ -1,0 +1,1 @@
+SELECT "a b", "weird""quote" FROM t

@@ -1,6 +1,13 @@
 {
   "version": 1,
   "cases": {
-    "slice0/select_one.sql": "panic"
+    "slice0/select_one.sql": "panic",
+    "slice1/bool_null.sql": "panic",
+    "slice1/double_literal.sql": "panic",
+    "slice1/generic_literal.sql": "panic",
+    "slice1/ident_delimited.sql": "panic",
+    "slice1/ident_plain.sql": "panic",
+    "slice1/long_literal.sql": "panic",
+    "slice1/string_literal.sql": "panic"
   }
 }
