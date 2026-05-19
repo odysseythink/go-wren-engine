@@ -144,3 +144,39 @@ func (v *Values) GetChildren() []Node {
 	return children
 }
 func (v *Values) isRelation() {}
+
+// Lateral represents LATERAL (subquery) in a FROM clause.
+type Lateral struct {
+	BaseNode
+	Query Statement
+}
+
+func (l *Lateral) GetChildren() []Node { return []Node{l.Query} }
+func (l *Lateral) isRelation()         {}
+
+// SampledRelation represents <relation> TABLESAMPLE <type> (<percentage>).
+type SampledRelation struct {
+	BaseNode
+	Relation         Relation
+	SampleType       string // "BERNOULLI" | "SYSTEM"
+	SamplePercentage Expression
+}
+
+func (s *SampledRelation) GetChildren() []Node { return []Node{s.Relation} }
+func (s *SampledRelation) isRelation()         {}
+
+// FunctionRelation represents a table function invocation name(args...) in FROM.
+type FunctionRelation struct {
+	BaseNode
+	Name      QualifiedName
+	Arguments []Expression
+}
+
+func (f *FunctionRelation) GetChildren() []Node {
+	children := make([]Node, len(f.Arguments))
+	for i, a := range f.Arguments {
+		children[i] = a
+	}
+	return children
+}
+func (f *FunctionRelation) isRelation() {}

@@ -898,8 +898,32 @@ func (b *AstBuilder) VisitPatternRecognition(ctx *generated.PatternRecognitionCo
 	return b.visit(ctx.AliasedRelation())
 }
 
+func (b *AstBuilder) VisitLateral(ctx *generated.LateralContext) interface{} {
+	return &ast.Lateral{Query: b.visitStatement(ctx.Query())}
+}
+
+func (b *AstBuilder) VisitFunctionRelation(ctx *generated.FunctionRelationContext) interface{} {
+	fe := ctx.FunctionExpression()
+	name := b.visit(fe.QualifiedName()).(ast.QualifiedName)
+	var args []ast.Expression
+	for _, expr := range fe.AllExpression() {
+		args = append(args, b.visitExpression(expr))
+	}
+	return &ast.FunctionRelation{
+		Name:      name,
+		Arguments: args,
+	}
+}
+
 func (b *AstBuilder) VisitSampledRelation(ctx *generated.SampledRelationContext) interface{} {
-	return b.visit(ctx.PatternRecognition())
+	if ctx.TABLESAMPLE() == nil {
+		return b.visit(ctx.PatternRecognition())
+	}
+	return &ast.SampledRelation{
+		Relation:         b.visitRelation(ctx.PatternRecognition()),
+		SampleType:       ctx.SampleType().GetText(),
+		SamplePercentage: b.visitExpression(ctx.Expression()),
+	}
 }
 
 // VisitSimpleCase mirrors trino AstBuilder.visitSimpleCase.
