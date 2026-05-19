@@ -2091,7 +2091,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IStandaloneExpressionContext is an interface to support dynamic dispatch.
@@ -2218,7 +2217,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IStandalonePathSpecificationContext is an interface to support dynamic dispatch.
@@ -2345,7 +2343,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IStandaloneTypeContext is an interface to support dynamic dispatch.
@@ -2472,7 +2469,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IStandaloneRowPatternContext is an interface to support dynamic dispatch.
@@ -2599,7 +2595,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IStatementContext is an interface to support dynamic dispatch.
@@ -15107,7 +15102,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IQueryContext is an interface to support dynamic dispatch.
@@ -15254,7 +15248,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IWithContext is an interface to support dynamic dispatch.
@@ -15460,7 +15453,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ITableElementContext is an interface to support dynamic dispatch.
@@ -15611,7 +15603,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IColumnDefinitionContext is an interface to support dynamic dispatch.
@@ -15872,7 +15863,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ILikeClauseContext is an interface to support dynamic dispatch.
@@ -16063,7 +16053,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPropertiesContext is an interface to support dynamic dispatch.
@@ -16193,7 +16182,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPropertyAssignmentsContext is an interface to support dynamic dispatch.
@@ -16363,7 +16351,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPropertyContext is an interface to support dynamic dispatch.
@@ -16511,7 +16498,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPropertyValueContext is an interface to support dynamic dispatch.
@@ -16712,7 +16698,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IQueryNoWithContext is an interface to support dynamic dispatch.
@@ -17383,7 +17368,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPgCastContext is an interface to support dynamic dispatch.
@@ -17539,7 +17523,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ILimitRowCountContext is an interface to support dynamic dispatch.
@@ -17706,7 +17689,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IRowCountContext is an interface to support dynamic dispatch.
@@ -17812,7 +17794,6 @@ func (p *SqlBaseParser) RowCount() (localctx IRowCountContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -17822,7 +17803,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IQueryTermContext is an interface to support dynamic dispatch.
@@ -18230,7 +18210,6 @@ errorExit:
 	}
 	p.UnrollRecursionContexts(_parentctx)
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IQueryPrimaryContext is an interface to support dynamic dispatch.
@@ -18670,7 +18649,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ISortItemContext is an interface to support dynamic dispatch.
@@ -18897,7 +18875,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IQuerySpecificationContext is an interface to support dynamic dispatch.
@@ -19498,7 +19475,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IGroupByContext is an interface to support dynamic dispatch.
@@ -19704,7 +19680,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IGroupingElementContext is an interface to support dynamic dispatch.
@@ -20318,7 +20293,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IGroupingSetContext is an interface to support dynamic dispatch.
@@ -20533,7 +20507,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IWindowDefinitionContext is an interface to support dynamic dispatch.
@@ -20711,7 +20684,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IWindowSpecificationContext is an interface to support dynamic dispatch.
@@ -21136,7 +21108,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // INamedQueryContext is an interface to support dynamic dispatch.
@@ -21347,7 +21318,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ISetQuantifierContext is an interface to support dynamic dispatch.
@@ -21453,7 +21423,6 @@ func (p *SqlBaseParser) SetQuantifier() (localctx ISetQuantifierContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -21463,7 +21432,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ISelectItemContext is an interface to support dynamic dispatch.
@@ -21796,7 +21764,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IRelationContext is an interface to support dynamic dispatch.
@@ -22229,7 +22196,6 @@ errorExit:
 	}
 	p.UnrollRecursionContexts(_parentctx)
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IJoinTypeContext is an interface to support dynamic dispatch.
@@ -22467,7 +22433,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IJoinCriteriaContext is an interface to support dynamic dispatch.
@@ -22716,7 +22681,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ISampledRelationContext is an interface to support dynamic dispatch.
@@ -22923,7 +22887,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ISampleTypeContext is an interface to support dynamic dispatch.
@@ -23029,7 +22992,6 @@ func (p *SqlBaseParser) SampleType() (localctx ISampleTypeContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -23039,7 +23001,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IListAggOverflowBehaviorContext is an interface to support dynamic dispatch.
@@ -23228,7 +23189,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IListaggCountIndicationContext is an interface to support dynamic dispatch.
@@ -23384,7 +23344,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPatternRecognitionContext is an interface to support dynamic dispatch.
@@ -24323,7 +24282,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IMeasureDefinitionContext is an interface to support dynamic dispatch.
@@ -24471,7 +24429,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IRowsPerMatchContext is an interface to support dynamic dispatch.
@@ -24707,7 +24664,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IEmptyMatchHandlingContext is an interface to support dynamic dispatch.
@@ -24926,7 +24882,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ISkipToContext is an interface to support dynamic dispatch.
@@ -25230,7 +25185,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ISubsetDefinitionContext is an interface to support dynamic dispatch.
@@ -25477,7 +25431,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IVariableDefinitionContext is an interface to support dynamic dispatch.
@@ -25625,7 +25578,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IAliasedRelationContext is an interface to support dynamic dispatch.
@@ -25822,7 +25774,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IColumnAliasesContext is an interface to support dynamic dispatch.
@@ -26008,7 +25959,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IRelationPrimaryContext is an interface to support dynamic dispatch.
@@ -26854,7 +26804,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IExpressionContext is an interface to support dynamic dispatch.
@@ -26958,7 +26907,6 @@ func (p *SqlBaseParser) Expression() (localctx IExpressionContext) {
 		p.booleanExpression(0)
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -26968,7 +26916,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IBooleanExpressionContext is an interface to support dynamic dispatch.
@@ -27494,7 +27441,6 @@ errorExit:
 	}
 	p.UnrollRecursionContexts(_parentctx)
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPredicateContext is an interface to support dynamic dispatch.
@@ -28907,7 +28853,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFunctionExpressionContext is an interface to support dynamic dispatch.
@@ -29114,7 +29059,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IValueExpressionContext is an interface to support dynamic dispatch.
@@ -29952,7 +29896,6 @@ errorExit:
 	}
 	p.UnrollRecursionContexts(_parentctx)
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPrimaryExpressionContext is an interface to support dynamic dispatch.
@@ -34854,7 +34797,6 @@ errorExit:
 	}
 	p.UnrollRecursionContexts(_parentctx)
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IProcessingModeContext is an interface to support dynamic dispatch.
@@ -34960,7 +34902,6 @@ func (p *SqlBaseParser) ProcessingMode() (localctx IProcessingModeContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -34970,7 +34911,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // INullTreatmentContext is an interface to support dynamic dispatch.
@@ -35126,7 +35066,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IStringContext is an interface to support dynamic dispatch.
@@ -35408,7 +35347,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ITimeZoneSpecifierContext is an interface to support dynamic dispatch.
@@ -35665,7 +35603,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IComparisonOperatorContext is an interface to support dynamic dispatch.
@@ -35791,7 +35728,6 @@ func (p *SqlBaseParser) ComparisonOperator() (localctx IComparisonOperatorContex
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -35801,7 +35737,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IComparisonQuantifierContext is an interface to support dynamic dispatch.
@@ -35912,7 +35847,6 @@ func (p *SqlBaseParser) ComparisonQuantifier() (localctx IComparisonQuantifierCo
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -35922,7 +35856,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IBooleanValueContext is an interface to support dynamic dispatch.
@@ -36028,7 +35961,6 @@ func (p *SqlBaseParser) BooleanValue() (localctx IBooleanValueContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -36038,7 +35970,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IIntervalContext is an interface to support dynamic dispatch.
@@ -36316,7 +36247,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IIntervalFieldContext is an interface to support dynamic dispatch.
@@ -36442,7 +36372,6 @@ func (p *SqlBaseParser) IntervalField() (localctx IIntervalFieldContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -36452,7 +36381,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // INormalFormContext is an interface to support dynamic dispatch.
@@ -36568,7 +36496,6 @@ func (p *SqlBaseParser) NormalForm() (localctx INormalFormContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -36578,7 +36505,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ITypeContext is an interface to support dynamic dispatch.
@@ -37983,7 +37909,6 @@ errorExit:
 	}
 	p.UnrollRecursionContexts(_parentctx)
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IRowFieldContext is an interface to support dynamic dispatch.
@@ -38137,7 +38062,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ITypeParameterContext is an interface to support dynamic dispatch.
@@ -38280,7 +38204,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IWhenClauseContext is an interface to support dynamic dispatch.
@@ -38478,7 +38401,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFilterContext is an interface to support dynamic dispatch.
@@ -38634,7 +38556,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IMergeCaseContext is an interface to support dynamic dispatch.
@@ -39553,7 +39474,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IOverContext is an interface to support dynamic dispatch.
@@ -39746,7 +39666,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IWindowFrameContext is an interface to support dynamic dispatch.
@@ -40304,7 +40223,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFrameExtentContext is an interface to support dynamic dispatch.
@@ -40702,7 +40620,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFrameBoundContext is an interface to support dynamic dispatch.
@@ -41051,7 +40968,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IRowPatternContext is an interface to support dynamic dispatch.
@@ -41464,7 +41380,6 @@ errorExit:
 	}
 	p.UnrollRecursionContexts(_parentctx)
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPatternPrimaryContext is an interface to support dynamic dispatch.
@@ -42080,7 +41995,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPatternQuantifierContext is an interface to support dynamic dispatch.
@@ -42626,7 +42540,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IUpdateAssignmentContext is an interface to support dynamic dispatch.
@@ -42774,7 +42687,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IExplainOptionContext is an interface to support dynamic dispatch.
@@ -43044,7 +42956,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ITransactionModeContext is an interface to support dynamic dispatch.
@@ -43303,7 +43214,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ILevelOfIsolationContext is an interface to support dynamic dispatch.
@@ -43644,7 +43554,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ICallArgumentContext is an interface to support dynamic dispatch.
@@ -43881,7 +43790,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPathElementContext is an interface to support dynamic dispatch.
@@ -44127,7 +44035,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPathSpecificationContext is an interface to support dynamic dispatch.
@@ -44297,7 +44204,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPrivilegeContext is an interface to support dynamic dispatch.
@@ -44418,7 +44324,6 @@ func (p *SqlBaseParser) Privilege() (localctx IPrivilegeContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -44428,7 +44333,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IQualifiedNameContext is an interface to support dynamic dispatch.
@@ -44605,7 +44509,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IQueryPeriodContext is an interface to support dynamic dispatch.
@@ -44793,7 +44696,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IRangeTypeContext is an interface to support dynamic dispatch.
@@ -44899,7 +44801,6 @@ func (p *SqlBaseParser) RangeType() (localctx IRangeTypeContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -44909,7 +44810,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IGrantorContext is an interface to support dynamic dispatch.
@@ -45167,7 +45067,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPrincipalContext is an interface to support dynamic dispatch.
@@ -45464,7 +45363,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IRolesContext is an interface to support dynamic dispatch.
@@ -45634,7 +45532,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IIdentifierContext is an interface to support dynamic dispatch.
@@ -45964,7 +45861,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // INumberContext is an interface to support dynamic dispatch.
@@ -46281,7 +46177,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IQuotedRegexMatchContext is an interface to support dynamic dispatch.
@@ -46449,7 +46344,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ICollateClauseContext is an interface to support dynamic dispatch.
@@ -46620,7 +46514,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // INonReservedContext is an interface to support dynamic dispatch.
@@ -47576,7 +47469,6 @@ func (p *SqlBaseParser) NonReserved() (localctx INonReservedContext) {
 		}
 	}
 
-errorExit:
 	if p.HasError() {
 		v := p.GetError()
 		localctx.SetException(v)
@@ -47586,7 +47478,6 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 func (p *SqlBaseParser) Sempred(localctx antlr.RuleContext, ruleIndex, predIndex int) bool {
