@@ -1,4 +1,4 @@
-.PHONY: build test clean generate capture-golden difftest difftest-accept
+.PHONY: build test clean generate capture-golden difftest difftest-accept capture-format-golden format-golden format-accept
 
 build:
 	go build -o bin/wren-server ./cmd/wren-server
@@ -23,3 +23,12 @@ generate:
 	@# Patch ANTLR-generated unreachable goto lines so go vet passes
 	@python3 -c "import re; f=open('internal/parser/generated/sqlbase_parser.go'); c=f.read(); f.close(); c=re.sub(r'\treturn localctx\n\tgoto errorExit // Trick to prevent compiler error if the label is not used\n', '\treturn localctx\n', c); f=open('internal/parser/generated/sqlbase_parser.go','w'); f.write(c); f.close()"
 	@echo 'generate complete (parser patched for go vet)'
+
+capture-format-golden:
+	./tools/capture-format-golden.sh
+
+format-golden:
+	go test ./internal/parser/formatter/ -run 'TestFormatGolden|TestFormatIdempotent' -v
+
+format-accept:
+	go test ./internal/parser/formatter/ -run TestFormatGolden -format.accept
