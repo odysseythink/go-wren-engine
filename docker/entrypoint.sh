@@ -5,8 +5,8 @@ set -euo pipefail
 # Mirrors Java image entrypoint argv convention.
 
 BINARY="${1:-wren-server}"
-MAX_HEAP="${2:-512m}"
-MIN_HEAP="${3:-64m}"
+MAX_HEAP="${MAX_HEAP_SIZE:-${2:-512m}}"
+MIN_HEAP="${MIN_HEAP_SIZE:-${3:-64m}}"
 
 # ── GOMEMLIMIT conversion ───────────────────────────────────────
 # Java heap args: 512m, 4g, 512MB, 512

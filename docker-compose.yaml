@@ -2,11 +2,16 @@ version: "3.8"
 
 services:
   wren-engine:
-    build: .
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     ports:
       - "8080:8080"
     volumes:
-      - ./etc/mdl:/app/etc/mdl
+      - ./etc:/usr/src/app/etc
     environment:
       - WREN_PORT=8080
       - WREN_DATASOURCE_TYPE=duckdb
+      - MAX_HEAP_SIZE=${MAX_HEAP_SIZE:-512m}
+      - MIN_HEAP_SIZE=${MIN_HEAP_SIZE:-64m}
+      - WARN_DROP_IN_GAPS=${WARN_DROP_IN_GAPS:-1}
