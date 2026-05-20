@@ -26,5 +26,5 @@ func newExpressionAnalysis(
 }
 
 func (e *ExpressionAnalysis) ReferencedFields() map[ast.NodeRef]*Field { return e.referencedFields }
-func (e *ExpressionAnalysis) Predicates() []*ast.ComparisonExpression   { return e.predicates }
-func (e *ExpressionAnalysis) RequireRelation() bool                     { return e.requireRelation }
+func (e *ExpressionAnalysis) Predicates() []*ast.ComparisonExpression  { return e.predicates }
+func (e *ExpressionAnalysis) RequireRelation() bool                    { return e.requireRelation }

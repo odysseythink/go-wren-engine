@@ -68,7 +68,7 @@ func TestMetricSqlRender_OnMetric(t *testing.T) {
 		t.Fatalf("RequiredObjects = %v, want [Revenue]", got)
 	}
 	got := formatter.FormatSQL(info.Query())
-	for _, want := range []string{`FROM`, `Revenue`, `GROUP BY 1`} {
+	for _, want := range []string{"FROM\n  Revenue", `GROUP BY 1`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("rendered RevenueByCustomer SQL missing %q:\n%s", want, got)
 		}

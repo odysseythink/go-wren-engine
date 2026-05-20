@@ -28,13 +28,13 @@ func newModelSqlRender(model *dto.Model, wrenMDL *mdl.WrenMDL) (*modelSqlRender,
 	}
 	return &modelSqlRender{
 		relationableSqlRender: relationableSqlRender{
-			relationable:               model,
-			mdl:                        wrenMDL,
-			refSql:                     refSql,
-			requiredObjects:            map[string]bool{},
-			selectItems:                []string{},
+			relationable:                        model,
+			mdl:                                 wrenMDL,
+			refSql:                              refSql,
+			requiredObjects:                     map[string]bool{},
+			selectItems:                         []string{},
 			calculatedRequiredRelationshipInfos: []*calculatedFieldRelationshipInfo{},
-			calculatedScopeSelectItems: newOrderedMap(),
+			calculatedScopeSelectItems:          newOrderedMap(),
 		},
 		requiredFields: requiredFields,
 	}, nil
@@ -297,5 +297,3 @@ func (r *modelSqlRender) getBaseModelSql(model *dto.Model) string {
 	}
 	return fmt.Sprintf("SELECT %s FROM %s AS \"%s\"", strings.Join(cols, ", "), r.refSql, model.Name)
 }
-
-

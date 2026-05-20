@@ -8,11 +8,11 @@ import (
 // ExpressionRelationshipInfo captures the relationship chain within a
 // dereference expression. Mirrors analyzer.ExpressionRelationshipInfo.
 type ExpressionRelationshipInfo struct {
-	qualifiedName            ast.QualifiedName
-	relationshipParts        []string
-	remainingParts           []string
-	relationships            []*dto.Relationship
-	relationshipColumnInfos  []*RelationshipColumnInfo
+	qualifiedName           ast.QualifiedName
+	relationshipParts       []string
+	remainingParts          []string
+	relationships           []*dto.Relationship
+	relationshipColumnInfos []*RelationshipColumnInfo
 }
 
 func newExpressionRelationshipInfo(
@@ -35,6 +35,6 @@ func newExpressionRelationshipInfo(
 	}
 }
 
-func (e *ExpressionRelationshipInfo) QualifiedName() ast.QualifiedName    { return e.qualifiedName }
-func (e *ExpressionRelationshipInfo) RemainingParts() []string            { return e.remainingParts }
-func (e *ExpressionRelationshipInfo) Relationships() []*dto.Relationship  { return e.relationships }
+func (e *ExpressionRelationshipInfo) QualifiedName() ast.QualifiedName   { return e.qualifiedName }
+func (e *ExpressionRelationshipInfo) RemainingParts() []string           { return e.remainingParts }
+func (e *ExpressionRelationshipInfo) Relationships() []*dto.Relationship { return e.relationships }

@@ -18,7 +18,7 @@ func newRelationInfo(name string, requiredObjects []string, query *ast.Query) *R
 	return &RelationInfo{name: name, requiredObjects: requiredObjects, query: query}
 }
 
-func (r *RelationInfo) Name() string             { return r.name }
+func (r *RelationInfo) Name() string              { return r.name }
 func (r *RelationInfo) RequiredObjects() []string { return r.requiredObjects }
 func (r *RelationInfo) Query() *ast.Query         { return r.query }
 

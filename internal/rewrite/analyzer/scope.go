@@ -5,20 +5,20 @@ import "github.com/wren-engine/wren/internal/parser/ast"
 // Scope represents a query scope with its relation type and parent.
 // Mirrors analyzer.Scope.
 type Scope struct {
-	parent           *Scope
-	relationId       RelationId
-	relationType     *RelationType
+	parent            *Scope
+	relationId        RelationId
+	relationType      *RelationType
 	isDataSourceScope bool
-	namedQueries     map[string]*ast.WithQuery
+	namedQueries      map[string]*ast.WithQuery
 }
 
 // ScopeBuilder builds a Scope. Mirrors Scope.builder().
 type ScopeBuilder struct {
-	parent           *Scope
-	relationId       RelationId
-	relationType     *RelationType
+	parent            *Scope
+	relationId        RelationId
+	relationType      *RelationType
 	isDataSourceScope bool
-	namedQueries     map[string]*ast.WithQuery
+	namedQueries      map[string]*ast.WithQuery
 }
 
 // ScopeBuilderWithParent creates a ScopeBuilder with a parent scope.
@@ -57,11 +57,11 @@ func (b *ScopeBuilder) Build() *Scope {
 		rt = NewRelationType(nil)
 	}
 	return &Scope{
-		parent:           b.parent,
-		relationId:       b.relationId,
-		relationType:     rt,
+		parent:            b.parent,
+		relationId:        b.relationId,
+		relationType:      rt,
 		isDataSourceScope: b.isDataSourceScope,
-		namedQueries:     b.namedQueries,
+		namedQueries:      b.namedQueries,
 	}
 }
 

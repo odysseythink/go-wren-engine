@@ -58,13 +58,13 @@ type subQueryJoinInfo struct {
 // relationableSqlRender holds the shared render state. Mirrors the abstract
 // RelationableSqlRender fields; embedded by modelSqlRender.
 type relationableSqlRender struct {
-	relationable                         *dto.Model
-	mdl                                  *mdl.WrenMDL
-	refSql                               string
-	requiredObjects                      map[string]bool
-	selectItems                          []string
-	calculatedRequiredRelationshipInfos  []*calculatedFieldRelationshipInfo
-	calculatedScopeSelectItems           *orderedMap
+	relationable                        *dto.Model
+	mdl                                 *mdl.WrenMDL
+	refSql                              string
+	requiredObjects                     map[string]bool
+	selectItems                         []string
+	calculatedRequiredRelationshipInfos []*calculatedFieldRelationshipInfo
+	calculatedScopeSelectItems          *orderedMap
 }
 
 // getRelationableAlias mirrors RelationableSqlRender.getRelationableAlias.

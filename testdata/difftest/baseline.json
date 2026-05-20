@@ -4,7 +4,7 @@
     "metric/cumulative": "pass",
     "metric/metric_on_metric": "pass",
     "metric/metric_on_model": "pass",
-    "metric/rollup": "fail",
+    "metric/rollup": "pass",
     "tpch/1": "oracle-error",
     "tpch/10": "pass",
     "tpch/11": "pass",
@@ -36,7 +36,7 @@
     "tpch/met_customer_revenue": "go-error",
     "tpch/met_daily": "go-error",
     "tpch/met_revenue": "go-error",
-    "tpch/met_rollup": "fail",
+    "tpch/met_rollup": "go-error",
     "tpch/met_weekly": "go-error"
   }
 }

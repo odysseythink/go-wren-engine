@@ -17,10 +17,10 @@ type Field struct {
 	sourceColumn      *dto.Column
 }
 
-func (f *Field) TableName() CatalogSchemaTableName    { return f.tableName }
-func (f *Field) ColumnName() string                   { return f.columnName }
-func (f *Field) Name() *string                        { return f.name }
-func (f *Field) SourceColumn() *dto.Column            { return f.sourceColumn }
+func (f *Field) TableName() CatalogSchemaTableName { return f.tableName }
+func (f *Field) ColumnName() string                { return f.columnName }
+func (f *Field) Name() *string                     { return f.name }
+func (f *Field) SourceColumn() *dto.Column         { return f.sourceColumn }
 
 // MatchesPrefix mirrors Field.matchesPrefix: empty prefix matches; otherwise
 // the relation alias (or table name) must have the prefix as a suffix.

@@ -65,9 +65,9 @@ func Analyze(analysis *Analysis, statement ast.Statement, ctx *base.SessionConte
 }
 
 type stmtVisitor struct {
-	ctx       *base.SessionContext
-	analysis  *Analysis
-	wrenMDL   *mdl.WrenMDL
+	ctx      *base.SessionContext
+	analysis *Analysis
+	wrenMDL  *mdl.WrenMDL
 }
 
 func (v *stmtVisitor) process(node ast.Node, scope *Scope) (*Scope, error) {
@@ -192,9 +192,7 @@ func (v *stmtVisitor) visitTable(n *ast.Table, scope *Scope) (*Scope, error) {
 				})
 			}
 			rt = NewRelationType(fields)
-		}
-		// metric branch
-		if metric, ok := v.wrenMDL.GetMetric(cstn.Table); ok {
+		} else if metric, ok := v.wrenMDL.GetMetric(cstn.Table); ok {
 			var fields []*Field
 			for i := range metric.Dimension {
 				col := &metric.Dimension[i]
@@ -220,25 +218,23 @@ func (v *stmtVisitor) visitTable(n *ast.Table, scope *Scope) (*Scope, error) {
 			}
 			v.analysis.AddCollectedColumns(fields)
 			rt = NewRelationType(fields)
-		}
-		// cumulative metric branch
-		if cm, ok := v.wrenMDL.GetCumulativeMetric(cstn.Table); ok {
+		} else if cm, ok := v.wrenMDL.GetCumulativeMetric(cstn.Table); ok {
 			var fields []*Field
 			windowCol := cm.Window.ToColumn()
-			name := windowCol.Name
+			winName := windowCol.Name
 			fields = append(fields, &Field{
 				tableName:         CatalogSchemaTableName{Catalog: v.wrenMDL.Catalog(), Schema: v.wrenMDL.Schema(), Table: cm.Name},
-				columnName:        name,
-				name:              &name,
+				columnName:        winName,
+				name:              &winName,
 				sourceDatasetName: &cm.Name,
 				sourceColumn:      &windowCol,
 			})
 			measureCol := cm.Measure.ToColumn()
-			name = measureCol.Name
+			measName := measureCol.Name
 			fields = append(fields, &Field{
 				tableName:         CatalogSchemaTableName{Catalog: v.wrenMDL.Catalog(), Schema: v.wrenMDL.Schema(), Table: cm.Name},
-				columnName:        name,
-				name:              &name,
+				columnName:        measName,
+				name:              &measName,
 				sourceDatasetName: &cm.Name,
 				sourceColumn:      &measureCol,
 			})

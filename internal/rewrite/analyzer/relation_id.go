@@ -12,5 +12,5 @@ type RelationId struct {
 func RelationIdOf(sourceNode ast.Node) RelationId { return RelationId{sourceNode: sourceNode} }
 func AnonymousRelationId() RelationId             { return RelationId{} }
 
-func (r RelationId) IsAnonymous() bool      { return r.sourceNode == nil }
-func (r RelationId) SourceNode() ast.Node   { return r.sourceNode }
+func (r RelationId) IsAnonymous() bool    { return r.sourceNode == nil }
+func (r RelationId) SourceNode() ast.Node { return r.sourceNode }

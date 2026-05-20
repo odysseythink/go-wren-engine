@@ -15,15 +15,15 @@ import (
 // metricSqlRender renders a Metric into a CTE query. Mirrors Java
 // io.wren.base.sqlrewrite.MetricSqlRender (extends RelationableSqlRender).
 type metricSqlRender struct {
-	relationable     *dto.Metric
-	mdl              *mdl.WrenMDL
-	refSql           string
-	requiredObjects  map[string]bool
-	selectItems      []string
+	relationable                        *dto.Metric
+	mdl                                 *mdl.WrenMDL
+	refSql                              string
+	requiredObjects                     map[string]bool
+	selectItems                         []string
 	calculatedRequiredRelationshipInfos []*calculatedFieldRelationshipInfo
 	calculatedScopeSelectItems          *orderedMap
-	requiredDims     map[string]bool
-	requiredMeasures map[string]bool
+	requiredDims                        map[string]bool
+	requiredMeasures                    map[string]bool
 }
 
 // newMetricSqlRender mirrors the 2-arg MetricSqlRender(Metric, WrenMDL) ctor.
@@ -266,6 +266,9 @@ func (r *metricSqlRender) getCalculatedSubQuery(baseModel *dto.Model, infos []*c
 	}
 	joins := ""
 	for _, rel := range reqRels {
+		if len(rel.Models) < 2 {
+			return nil, fmt.Errorf("relationship %q has fewer than 2 models", rel.Name)
+		}
 		cond, err := qualifiedConditionString(rel.Condition)
 		if err != nil {
 			return nil, err
@@ -293,12 +296,18 @@ func (r *metricSqlRender) renderOnModel(baseModel *dto.Model) (*RelationInfo, er
 			r.selectItems = append(r.selectItems, item)
 		}
 	}
-	// non-relationship, with-expression columns
+	// columns with expression (relationship-aware via collectRelationship)
 	for _, c := range r.relationable.GetColumns() {
-		if c.Relationship == "" && c.Expression != "" {
+		if c.Expression != "" {
 			if err := r.collectRelationship(c, baseModel); err != nil {
 				return nil, err
 			}
+		}
+	}
+	// Defensive: metric columns with Relationship but no Expression are not supported
+	for _, c := range r.relationable.GetColumns() {
+		if c.Relationship != "" && c.Expression == "" && r.isRequiredColumn(c.Name) {
+			return nil, fmt.Errorf("metric column %q has Relationship but no Expression", c.Name)
 		}
 	}
 	r.addCountAllIfNeeded()

@@ -4,9 +4,14 @@ import "testing"
 
 func TestTimeUnit_IntervalExpression(t *testing.T) {
 	cases := map[TimeUnit]string{
-		TimeUnitYear: "INTERVAL '1' YEAR",
-		TimeUnitWeek: "INTERVAL '7' DAY",
-		TimeUnitDay:  "INTERVAL '1' DAY",
+		TimeUnitYear:    "INTERVAL '1' YEAR",
+		TimeUnitQuarter: "INTERVAL '3' MONTH",
+		TimeUnitMonth:   "INTERVAL '1' MONTH",
+		TimeUnitWeek:    "INTERVAL '7' DAY",
+		TimeUnitDay:     "INTERVAL '1' DAY",
+		TimeUnitHour:    "INTERVAL '1' HOUR",
+		TimeUnitMinute:  "INTERVAL '1' MINUTE",
+		TimeUnitSecond:  "INTERVAL '1' SECOND",
 	}
 	for unit, want := range cases {
 		if got := unit.IntervalExpression(); got != want {

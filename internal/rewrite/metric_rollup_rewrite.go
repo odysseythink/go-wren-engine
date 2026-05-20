@@ -41,7 +41,7 @@ func (r *MetricRollupRewrite) Apply(root ast.Statement, ctx *base.SessionContext
 		}
 		return &ast.AliasedRelation{
 			Relation: &ast.TableSubquery{Query: query},
-			Alias:    &ast.Identifier{Value: info.Metric.Name}, // non-delimited (risk #6)
+			Alias:    &ast.Identifier{Value: info.Metric.Name}, // Java new Identifier(name) sets Delimited=false
 		}, true
 	})
 	if rewriteErr != nil {

@@ -20,4 +20,6 @@ func NewRelationshipColumnInfo(model *dto.Model, column *dto.Column, rel *dto.Re
 	return &RelationshipColumnInfo{column: column, model: model, normalizedRelationship: norm}
 }
 
-func (r *RelationshipColumnInfo) NormalizedRelationship() *dto.Relationship { return r.normalizedRelationship }
+func (r *RelationshipColumnInfo) NormalizedRelationship() *dto.Relationship {
+	return r.normalizedRelationship
+}

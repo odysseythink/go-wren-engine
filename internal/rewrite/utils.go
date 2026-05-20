@@ -105,7 +105,7 @@ func dereferenceFrom(parts []ast.Identifier) ast.Expression {
 }
 
 // sortedKeys returns the keys of set in ascending order — used to turn a
-// requiredObjects set into a deterministic slice (risk #1).
+// requiredObjects set into a deterministic slice.
 func sortedKeys(set map[string]bool) []string {
 	out := make([]string, 0, len(set))
 	for k := range set {
@@ -138,13 +138,13 @@ func getWindowType(cm *dto.CumulativeMetric, wrenMDL *mdl.WrenMDL) (string, erro
 		if base.Window.Name == cm.Window.RefColumn {
 			return getWindowType(base, wrenMDL)
 		}
-		return "", fmt.Errorf("CumulativeMetric measure cannot be window as it is not date/timestamp type")
+		return "", fmt.Errorf("window ref column %s not found in base cumulative metric %s", cm.Window.RefColumn, cm.BaseObject)
 	}
 	return "", fmt.Errorf("window type not found in %s", cm.BaseObject)
 }
 
 // getCumulativeMetricSql builds the cumulative-metric CTE SQL.
-// Mirrors Java Utils.getCumulativeMetricSql. Template kept verbatim (risk #1).
+// Mirrors Java Utils.getCumulativeMetricSql. Template kept verbatim.
 func getCumulativeMetricSql(cm *dto.CumulativeMetric, wrenMDL *mdl.WrenMDL) (string, error) {
 	windowType, err := getWindowType(cm, wrenMDL)
 	if err != nil {
