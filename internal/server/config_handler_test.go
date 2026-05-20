@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -148,5 +150,123 @@ func TestConfigDeleteResets(t *testing.T) {
 	v, _ := cm.Get("wren.datasource.type")
 	if v.Value == nil || *v.Value != "DUCKDB" {
 		t.Fatalf("expected reset to DUCKDB, got %+v", v)
+	}
+}
+
+func TestConfigPatch_PersistsToDisk(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "config.properties")
+	if err := os.WriteFile(path, []byte("wren.datasource.type=DUCKDB\n"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	cm := config.NewConfigManager()
+	if err := cm.LoadFromFile(path); err != nil {
+		t.Fatalf("LoadFromFile: %v", err)
+	}
+	h := NewConfigHandler(cm)
+	r := chi.NewRouter()
+	h.RegisterRoutes(r)
+
+	body, _ := json.Marshal([]map[string]any{
+		{"name": "wren.datasource.type", "value": "POSTGRES"},
+	})
+	req := httptest.NewRequest(http.MethodPatch, "/v1/config", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if !bytes.Contains(data, []byte("wren.datasource.type=POSTGRES")) {
+		t.Fatalf("file does not contain PATCHed value:\n%s", string(data))
+	}
+
+	archiveDir := filepath.Join(tmpDir, "archived")
+	entries, err := os.ReadDir(archiveDir)
+	if err != nil {
+		t.Fatalf("ReadDir archived: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 archived file, got %d", len(entries))
+	}
+}
+
+func TestConfigPatch_StaticKey_NoArchiveNoSync(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "config.properties")
+	if err := os.WriteFile(path, []byte("duckdb.max-concurrent-tasks=10\n"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	cm := config.NewConfigManager()
+	if err := cm.LoadFromFile(path); err != nil {
+		t.Fatalf("LoadFromFile: %v", err)
+	}
+	h := NewConfigHandler(cm)
+	r := chi.NewRouter()
+	h.RegisterRoutes(r)
+
+	body, _ := json.Marshal([]map[string]any{
+		{"name": "duckdb.max-concurrent-tasks", "value": "99"},
+	})
+	req := httptest.NewRequest(http.MethodPatch, "/v1/config", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	archiveDir := filepath.Join(tmpDir, "archived")
+	_, err := os.Stat(archiveDir)
+	if err == nil {
+		t.Fatalf("archive dir should not exist for static-key PATCH")
+	}
+}
+
+func TestConfigDelete_PersistsToDisk(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "config.properties")
+	if err := os.WriteFile(path, []byte("wren.datasource.type=POSTGRES\n"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	cm := config.NewConfigManager()
+	if err := cm.LoadFromFile(path); err != nil {
+		t.Fatalf("LoadFromFile: %v", err)
+	}
+	h := NewConfigHandler(cm)
+	r := chi.NewRouter()
+	h.RegisterRoutes(r)
+
+	req := httptest.NewRequest(http.MethodDelete, "/v1/config", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if !bytes.Contains(data, []byte("wren.datasource.type=DUCKDB")) {
+		t.Fatalf("file should contain default DUCKDB after DELETE:\n%s", string(data))
+	}
+
+	archiveDir := filepath.Join(tmpDir, "archived")
+	entries, err := os.ReadDir(archiveDir)
+	if err != nil {
+		t.Fatalf("ReadDir archived: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 archived file, got %d", len(entries))
 	}
 }

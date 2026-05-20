@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/wren-engine/wren/internal/config"
@@ -12,10 +13,17 @@ import (
 )
 
 func main() {
+	configPath := os.Getenv("WREN_CONFIG_FILE")
+	if configPath == "" {
+		log.Fatalf("WREN_CONFIG_FILE env required (Java parity: -Dconfig must be set)")
+	}
+
 	configMgr := config.NewConfigManager()
+	if err := configMgr.LoadFromFile(configPath); err != nil {
+		log.Fatalf("Config file not found: %v", err)
+	}
 	configMgr.LoadFromEnv()
 
-	// Create connectors based on config
 	md := duckdb.NewMetadata()
 	var metadata service.Metadata = md
 	var sqlConverter converter.SqlConverter = &converter.DuckDBSqlConverter{}
