@@ -1,4 +1,4 @@
-.PHONY: build test clean generate capture-golden difftest difftest-accept capture-format-golden format-golden format-accept
+.PHONY: build test clean generate capture-golden difftest difftest-accept capture-format-golden format-golden format-accept capture-duckdb-golden duckdb-difftest duckdb-difftest-accept
 
 build:
 	go build -o bin/wren-server ./cmd/wren-server
@@ -32,3 +32,12 @@ format-golden:
 
 format-accept:
 	go test ./internal/parser/formatter/ -run TestFormatGolden -format.accept
+
+capture-duckdb-golden:
+	./tools/capture-duckdb-golden.sh
+
+duckdb-difftest:
+	go test ./internal/difftest/... -run TestDifferentialDuckDB -v
+
+duckdb-difftest-accept:
+	go test ./internal/difftest/... -run TestDifferentialDuckDB -difftest.accept-duckdb
