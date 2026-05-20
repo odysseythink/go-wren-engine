@@ -10,9 +10,15 @@ func TestLoadCorpus_TPCH(t *testing.T) {
 	if len(cases) != 37 {
 		t.Fatalf("want 37 cases, got %d", len(cases))
 	}
-	c := cases[0]
+	var c Case
+	for _, cc := range cases {
+		if cc.Group == "tpch" {
+			c = cc
+			break
+		}
+	}
 	if c.Group != "tpch" {
-		t.Errorf("Group = %q, want tpch", c.Group)
+		t.Fatalf("tpch group not found in corpus")
 	}
 	if !c.ModelingOnly {
 		t.Errorf("ModelingOnly = false, want true")

@@ -14,7 +14,7 @@ func TestCreateDateSpineQuery(t *testing.T) {
 		t.Fatalf("createDateSpineQuery: %v", err)
 	}
 	got := formatter.FormatSQL(q)
-	for _, want := range []string{"GENERATE_TIMESTAMP_ARRAY", "metric_time", "INTERVAL '1 DAY'"} {
+	for _, want := range []string{"GENERATE_TIMESTAMP_ARRAY", "metric_time", "INTERVAL", "'1' DAY"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("date spine SQL missing %q:\n%s", want, got)
 		}

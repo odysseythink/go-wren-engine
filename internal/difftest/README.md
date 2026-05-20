@@ -26,6 +26,14 @@
   （`{"modelingOnly": true}`）、`queries/`。
 - 之后运行 `make capture-golden` 与 `make difftest-accept`。
 
+## 语料组
+
+- `tpch/` —— TPC-H 标准 22 条查询 + P3a 模型查询 (`m_*.sql`) + P3b 度量查询
+  (`met_*.sql`)。`met_*` 因传递性依赖含 Jinja 列的 `Customer` 模型，在 P3b 阶段为
+  已知 `go-error`（待 P6 Jinja 宏层）。
+- `metric/` —— P3b 合成度量语料组（无 Jinja 小 MDL），含 metric-on-model /
+  metric-on-metric / cumulative metric / rollup，为 P3b 端到端字节奇偶证据。
+
 ## 失败分类
 
 - `fail` —— token 序列与 Java 不一致（改写逻辑差异，P2/P3 的修复目标）。
