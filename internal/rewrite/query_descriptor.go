@@ -29,8 +29,8 @@ func QueryDescriptorOf(name string, analyzedMDL *mdl.AnalyzedMDL, ctx *base.Sess
 	if cm, ok := wrenMDL.GetCumulativeMetric(name); ok {
 		return cumulativeMetricInfoGet(cm, wrenMDL)
 	}
-	if _, ok := wrenMDL.GetView(name); ok {
-		return nil, fmt.Errorf("view %q requires P3c", name)
+	if view, ok := wrenMDL.GetView(name); ok {
+		return viewInfoGet(view, analyzedMDL, ctx)
 	}
 	if name == dateSpineName {
 		return dateSpineInfoGet(wrenMDL.GetDateSpine())

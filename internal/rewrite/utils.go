@@ -38,6 +38,20 @@ func parseQuery(sql string) (*ast.Query, error) {
 	return q, nil
 }
 
+// parseView parses a view's SQL statement and asserts it is a *ast.Query.
+// Mirrors Java Utils.parseView.
+func parseView(sql string) (*ast.Query, error) {
+	stmt, err := parseSQL(sql)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse view: %s: %w", sql, err)
+	}
+	q, ok := stmt.(*ast.Query)
+	if !ok {
+		return nil, fmt.Errorf("view statement is not a query: %s", sql)
+	}
+	return q, nil
+}
+
 // checkArgument returns a formatted error when cond is false.
 // Mirrors Java com.google.common.base.Preconditions.checkArgument.
 func checkArgument(cond bool, format string, args ...any) error {
