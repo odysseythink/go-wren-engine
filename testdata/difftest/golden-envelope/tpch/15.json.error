@@ -1,0 +1,1 @@
+{"code":"GENERIC_INTERNAL_ERROR","message":"java.lang.RuntimeException: io.wren.base.WrenException: java.sql.SQLException: Catalog Error: Table with name supplier does not exist!\nDid you mean \"pg_proc\"?\nLINE 18:   supplier\n           ^"}

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "cases": {
-    "exec_smoke/const": "no-golden",
-    "exec_smoke/values_basic": "no-golden",
-    "exec_smoke/values_nulls": "no-golden",
-    "viewenum/enum": "no-golden",
-    "viewenum/view_nested": "no-golden",
-    "viewenum/view_on_metric": "no-golden",
-    "viewenum/view_on_model": "no-golden",
-    "viewenum/view_rollup": "no-golden"
+    "exec_smoke/const": "pass",
+    "exec_smoke/values_basic": "go-error",
+    "exec_smoke/values_nulls": "go-error",
+    "viewenum/enum": "oracle-error",
+    "viewenum/view_nested": "oracle-error",
+    "viewenum/view_on_metric": "oracle-error",
+    "viewenum/view_on_model": "oracle-error",
+    "viewenum/view_rollup": "oracle-error"
   }
 }

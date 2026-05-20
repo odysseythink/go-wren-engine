@@ -1,0 +1,1 @@
+{"code":"GENERIC_INTERNAL_ERROR","message":"java.lang.RuntimeException: io.wren.base.WrenException: java.sql.SQLException: Catalog Error: Table with name lineitem does not exist!\nDid you mean \"temp.information_schema.tables\"?\nLINE 41:               tpch.lineitem\n                       ^"}

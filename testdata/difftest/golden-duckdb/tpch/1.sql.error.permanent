@@ -1,0 +1,3 @@
+# Permanent oracle error — Java 0.9.3: IllegalArgumentException: count(*) should have a followed source
+# Reproduce: POST /v1/mdl/dry-plan with modelingOnly=false and 1.sql
+{"code":"GENERIC_INTERNAL_ERROR","message":"java.lang.IllegalArgumentException: count(*) should have a followed source"}

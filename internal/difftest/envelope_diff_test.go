@@ -33,6 +33,11 @@ var (
 // numeric coercion (Go int32 vs Java Integer both Unmarshal to float64).
 func runEnvelopeCase(t *testing.T, c Case) (status, detail string) {
 	t.Helper()
+	defer func() {
+		if r := recover(); r != nil {
+			status, detail = "go-error", fmt.Sprintf("panic: %v", r)
+		}
+	}()
 	goldenBase := filepath.Join(envelopeDir, c.Group, c.Name+".json")
 	if _, err := os.Stat(goldenBase + ".error.permanent"); err == nil {
 		return "oracle-error-permanent", "Java preview errored permanently"

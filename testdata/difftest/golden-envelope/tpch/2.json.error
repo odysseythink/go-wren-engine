@@ -1,0 +1,1 @@
+{"code":"GENERIC_INTERNAL_ERROR","message":"java.lang.RuntimeException: io.wren.base.WrenException: java.sql.SQLException: Catalog Error: Table with name part does not exist!\nDid you mean \"pg_am\"?\nLINE 11:   part\n           ^"}
