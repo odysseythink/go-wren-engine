@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/wren-engine/wren/internal/difftest"
@@ -21,6 +23,9 @@ func main() {
 	addr := flag.String("addr", "http://localhost:18080", "wren-engine oracle base URL")
 	casesDir := flag.String("cases", "testdata/difftest/cases", "corpus directory")
 	outDir := flag.String("out", "testdata/difftest/golden", "golden output directory")
+	groupsFlag := flag.String("groups", "all", "comma-separated corpus groups, or 'all'")
+	timeout := flag.Duration("timeout", 60*time.Second, "per-request timeout")
+	retryCount := flag.Int("retry", 0, "retry count on transient failures")
 	flag.Parse()
 
 	cases, err := difftest.LoadCorpus(*casesDir)
@@ -28,9 +33,24 @@ func main() {
 		log.Fatalf("load corpus: %v", err)
 	}
 
-	client := &http.Client{Timeout: 60 * time.Second}
+	var wantGroups map[string]bool
+	if *groupsFlag != "all" {
+		wantGroups = map[string]bool{}
+		for _, g := range strings.Split(*groupsFlag, ",") {
+			wantGroups[strings.TrimSpace(g)] = true
+		}
+	}
+
+	client := &http.Client{Timeout: *timeout}
 	var ok, errs int
+	var total int
+
 	for _, c := range cases {
+		if wantGroups != nil && !wantGroups[c.Group] {
+			continue
+		}
+		total++
+
 		body, _ := json.Marshal(map[string]any{
 			"manifest":     json.RawMessage(c.ManifestJSON),
 			"sql":          c.SQL,
@@ -42,9 +62,9 @@ func main() {
 		}
 		req.Header.Set("Content-Type", "application/json")
 
-		resp, err := client.Do(req)
+		resp, err := doWithRetry(client, req, *retryCount)
 		if err != nil {
-			log.Fatalf("%s: request failed (is the oracle up?): %v", c.ID(), err)
+			log.Fatalf("%s: request failed after %d retries (is the oracle up?): %v", c.ID(), *retryCount, err)
 		}
 		payload, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
@@ -57,16 +77,36 @@ func main() {
 		if resp.StatusCode/100 == 2 {
 			writeFile(base, payload)
 			os.Remove(base + ".error")
+			os.Remove(base + ".error.permanent")
 			ok++
 			fmt.Printf("OK    %s\n", c.ID())
 		} else {
 			writeFile(base+".error", payload)
 			os.Remove(base)
+			os.Remove(base + ".error.permanent")
 			errs++
 			fmt.Printf("ERROR %s (HTTP %d)\n", c.ID(), resp.StatusCode)
 		}
 	}
-	fmt.Printf("\ncaptured %d golden, %d oracle errors, %d total\n", ok, errs, len(cases))
+	fmt.Printf("summary: ok=%d errs=%d total=%d\n", ok, errs, total)
+	if errs > 0 {
+		os.Exit(1)
+	}
+}
+
+func doWithRetry(client *http.Client, req *http.Request, retries int) (*http.Response, error) {
+	var lastErr error
+	for i := 0; i <= retries; i++ {
+		resp, err := client.Do(req.Clone(context.Background()))
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+		if i < retries {
+			time.Sleep(time.Second * time.Duration(i+1))
+		}
+	}
+	return nil, lastErr
 }
 
 func writeFile(path string, data []byte) {

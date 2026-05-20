@@ -52,7 +52,7 @@ envelope-difftest-accept:
 	go test ./internal/difftest/... -run TestEnvelopeDifferential -difftest.accept-envelope
 
 capture-analysis-golden:
-	go run ./cmd/capture-analysis-golden/main.go http://localhost:18080
+	go run ./cmd/capture-analysis-golden -addr http://localhost:18080
 
 analysis-difftest:
 	go test ./internal/difftest/ -run TestAnalysis -v
