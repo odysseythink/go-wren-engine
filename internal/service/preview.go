@@ -41,7 +41,7 @@ func (s *PreviewService) Preview(ctx context.Context, wrenMDL *mdl.WrenMDL, sqlT
 	ctx = analyzer.WithSessionContext(ctx, &analyzer.SessionContext{
 		Catalog:             wrenMDL.Catalog(),
 		Schema:              wrenMDL.Schema(),
-		EnableDynamicFields: s.configMgr.Get().Wren.EnableDynamicFields,
+		EnableDynamicFields: s.configMgr.EnableDynamicFields(),
 	})
 	analyzed := mdl.NewAnalyzedMDL(wrenMDL)
 	planned, err := rewrite.Rewrite(sqlText, analyzer.GetSessionContext(ctx), analyzed)

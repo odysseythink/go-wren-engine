@@ -15,8 +15,6 @@ func main() {
 	configMgr := config.NewConfigManager()
 	configMgr.LoadFromEnv()
 
-	cfg := configMgr.Get()
-
 	// Create connectors based on config
 	md := duckdb.NewMetadata()
 	var metadata service.Metadata = md
@@ -25,7 +23,7 @@ func main() {
 	previewService := service.NewPreviewService(metadata, sqlConverter, configMgr)
 	validationService := service.NewValidationService()
 
-	srv := server.NewServer(fmt.Sprintf(":%d", cfg.Server.Port))
+	srv := server.NewServer(fmt.Sprintf(":%d", configMgr.Port()))
 
 	mdlHandler := server.NewMDLHandler(previewService, validationService)
 	mdlHandler.RegisterRoutes(srv.Router())
@@ -39,7 +37,7 @@ func main() {
 	configHandler := server.NewConfigHandler(configMgr)
 	configHandler.RegisterRoutes(srv.Router())
 
-	fmt.Printf("wren-engine starting on port %d...\n", cfg.Server.Port)
+	fmt.Printf("wren-engine starting on port %d...\n", configMgr.Port())
 	if err := srv.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "server error: %v\n", err)
 		os.Exit(1)
