@@ -1,10 +1,31 @@
 package config
 
 import (
+	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
+
+	"sync"
+	"time"
 )
+
+// knownKeys is the set of 11 typed config keys (Java parity).
+var knownKeys = map[string]bool{
+	"wren.directory":                          true,
+	"wren.datasource.type":                    true,
+	"wren.experimental-enable-dynamic-fields": true,
+	"duckdb.memory-limit":                     true,
+	"duckdb.home-directory":                   true,
+	"duckdb.temp-directory":                   true,
+	"duckdb.max-concurrent-tasks":             true,
+	"duckdb.max-cache-query-timeout":          true,
+	"duckdb.cache-task-retry-delay":           true,
+	"duckdb.connector.init-sql-path":          true,
+	"duckdb.connector.session-sql-path":       true,
+}
 
 // ConfigEntry mirrors Java ConfigManager.ConfigEntry: name + string value
 // (empty string is normalised to JSON null on serialisation).
@@ -22,19 +43,26 @@ func stringValue(s string) *string {
 
 // ConfigManager mirrors Java io.wren.base.config.ConfigManager.
 type ConfigManager struct {
-	port    int               // bootstrap-only, never in /v1/config
-	configs map[string]string // mirrors Java configs map
-	static  map[string]bool   // mirrors Java staticConfigs set
+	mu             sync.RWMutex
+	port           int               // bootstrap-only, never in /v1/config
+	configs        map[string]string // mirrors Java configs map (11 typed keys)
+	static         map[string]bool   // mirrors Java staticConfigs set
+	fileExtras     map[string]string // non-11 keys from file + overrides (persisted)
+	filePath       string            // path to config.properties
+	requiredReload map[string]bool   // keys whose change triggers reload
+	reloadHooks    map[string][]func()
 }
 
 // NewConfigManager creates a ConfigManager with Java-compatible defaults.
 func NewConfigManager() *ConfigManager {
 	cm := &ConfigManager{
-		port:    8080,
-		configs: map[string]string{},
-		static:  map[string]bool{},
+		port:           8080,
+		configs:        map[string]string{},
+		static:         map[string]bool{},
+		fileExtras:     map[string]string{},
+		requiredReload: map[string]bool{},
+		reloadHooks:    map[string][]func(){},
 	}
-	// initConfig(key, value, requiredReload, isStatic) — mirror Java's table.
 	cm.initConfig("wren.directory", "/usr/src/app/etc/mdl", false, true)
 	cm.initConfig("wren.datasource.type", "DUCKDB", true, false)
 	cm.initConfig("wren.experimental-enable-dynamic-fields", "false", false, false)
@@ -49,10 +77,13 @@ func NewConfigManager() *ConfigManager {
 	return cm
 }
 
-func (cm *ConfigManager) initConfig(key, value string, _requiredReload, isStatic bool) {
+func (cm *ConfigManager) initConfig(key, value string, reload, isStatic bool) {
 	cm.configs[key] = value
 	if isStatic {
 		cm.static[key] = true
+	}
+	if reload {
+		cm.requiredReload[key] = true
 	}
 }
 
@@ -61,6 +92,12 @@ func (cm *ConfigManager) Port() int { return cm.port }
 
 // Get returns the entry for a name; ok=false if unknown.
 func (cm *ConfigManager) Get(name string) (ConfigEntry, bool) {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+	return cm.getUnlocked(name)
+}
+
+func (cm *ConfigManager) getUnlocked(name string) (ConfigEntry, bool) {
 	v, ok := cm.configs[name]
 	if !ok {
 		return ConfigEntry{}, false
@@ -70,6 +107,8 @@ func (cm *ConfigManager) Get(name string) (ConfigEntry, bool) {
 
 // All returns all entries sorted by name (risk #3).
 func (cm *ConfigManager) All() []ConfigEntry {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
 	out := make([]ConfigEntry, 0, len(cm.configs))
 	for name, val := range cm.configs {
 		out = append(out, ConfigEntry{Name: name, Value: stringValue(val)})
@@ -81,6 +120,12 @@ func (cm *ConfigManager) All() []ConfigEntry {
 // Set updates a single key. Static keys are silently skipped (Java parity, risk #7).
 // Unknown keys return ErrUnknownConfigKey.
 func (cm *ConfigManager) Set(name, value string) error {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	return cm.setUnlocked(name, value)
+}
+
+func (cm *ConfigManager) setUnlocked(name, value string) error {
 	if cm.static[name] {
 		return nil // silent skip
 	}
@@ -88,14 +133,30 @@ func (cm *ConfigManager) Set(name, value string) error {
 		return ErrUnknownConfigKey{Key: name}
 	}
 	cm.configs[name] = value
+	cm.fileExtras[name] = value
 	return nil
 }
 
 // Reset wipes config back to defaults (Java DELETE /v1/config behaviour).
+// Preserves fileExtras for non-11 keys (transparency).
 func (cm *ConfigManager) Reset() {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 	port := cm.port
+	// Preserve non-11-key extras
+	preserved := make(map[string]string)
+	for k, v := range cm.fileExtras {
+		if !knownKeys[k] {
+			preserved[k] = v
+		}
+	}
+	mu := cm.mu       // preserve locked mutex across value replacement
+	path := cm.filePath // preserve file path
 	*cm = *NewConfigManager()
+	cm.mu = mu
 	cm.port = port
+	cm.filePath = path
+	cm.fileExtras = preserved
 }
 
 // ErrUnknownConfigKey is returned by Set when the key isn't a recognised Java key.
@@ -105,6 +166,8 @@ func (e ErrUnknownConfigKey) Error() string { return "Config not found: " + e.Ke
 
 // LoadFromEnv overrides defaults with environment variables.
 func (cm *ConfigManager) LoadFromEnv() {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 	envMap := map[string]string{
 		"WREN_DIRECTORY":                          "wren.directory",
 		"WREN_DATASOURCE_TYPE":                    "wren.datasource.type",
@@ -121,6 +184,7 @@ func (cm *ConfigManager) LoadFromEnv() {
 	for env, key := range envMap {
 		if v := os.Getenv(env); v != "" {
 			cm.configs[key] = v
+			cm.fileExtras[key] = v
 		}
 	}
 	if v := os.Getenv("WREN_PORT"); v != "" {
@@ -130,8 +194,144 @@ func (cm *ConfigManager) LoadFromEnv() {
 	}
 }
 
+// LoadFromFile reads a .properties file and overlays known keys onto configs.
+// Unknown keys are stored in fileExtras for transparent write-back.
+func (cm *ConfigManager) LoadFromFile(path string) error {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("config file not found: %w", err)
+	}
+	defer f.Close()
+
+	props, err := parseProperties(f)
+	if err != nil {
+		return fmt.Errorf("parse config file: %w", err)
+	}
+
+	cm.filePath = path
+	for k, v := range props {
+		if knownKeys[k] {
+			cm.configs[k] = v
+		}
+		cm.fileExtras[k] = v
+	}
+	return nil
+}
+
+// SyncToFile writes the current state back to the config file.
+// Uses atomic write (temp file + rename) to avoid half-written files.
+func (cm *ConfigManager) SyncToFile() error {
+	cm.mu.RLock()
+	path := cm.filePath
+	if path == "" {
+		cm.mu.RUnlock()
+		return fmt.Errorf("no config file path set")
+	}
+	// Build merged props for writing
+	props := make(map[string]string, len(cm.fileExtras))
+	for k, v := range cm.fileExtras {
+		props[k] = v
+	}
+	// configs override fileExtras for known keys
+	for k, v := range cm.configs {
+		props[k] = v
+	}
+	cm.mu.RUnlock()
+
+	dir := filepath.Dir(path)
+	tmpPath := filepath.Join(dir, "."+filepath.Base(path)+".tmp")
+
+	f, err := os.OpenFile(tmpPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+
+	ts := time.Now().UTC().Format(time.RFC1123)
+	if err := writePropertiesWithTimestamp(f, props, "sync with file", ts); err != nil {
+		f.Close()
+		os.Remove(tmpPath)
+		return fmt.Errorf("write properties: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("close temp file: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, path); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("rename temp file: %w", err)
+	}
+	return nil
+}
+
+// Archive copies the current config file to <dir>/archived/config.properties.<timestamp>.
+// Prefers hard link (atomic) then falls back to copy.
+func (cm *ConfigManager) Archive() error {
+	cm.mu.RLock()
+	path := cm.filePath
+	cm.mu.RUnlock()
+	if path == "" {
+		return fmt.Errorf("no config file path set")
+	}
+
+	dir := filepath.Dir(path)
+	archiveDir := filepath.Join(dir, "archived")
+	if err := os.MkdirAll(archiveDir, 0o755); err != nil {
+		return fmt.Errorf("create archive dir: %w", err)
+	}
+
+	now := time.Now().UTC()
+	ts := now.Format("20060102150405") + fmt.Sprintf("%04d", now.Nanosecond()/100000)
+	dst := filepath.Join(archiveDir, filepath.Base(path)+"."+ts)
+
+	// Try hard link first (atomic, POSIX)
+	if err := os.Link(path, dst); err == nil {
+		return nil
+	}
+
+	// Fallback: copy file contents
+	src, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("open source for archive: %w", err)
+	}
+	defer src.Close()
+
+	dstFile, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return fmt.Errorf("create archive file: %w", err)
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, src); err != nil {
+		return fmt.Errorf("copy to archive: %w", err)
+	}
+	return dstFile.Close()
+}
+
+// OnChange registers a callback for when a specific key changes and requires reload.
+func (cm *ConfigManager) OnChange(key string, fn func()) {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	cm.reloadHooks[key] = append(cm.reloadHooks[key], fn)
+}
+
+// FireReload calls all registered hooks for the given key.
+func (cm *ConfigManager) FireReload(key string) {
+	cm.mu.RLock()
+	hooks := cm.reloadHooks[key]
+	cm.mu.RUnlock()
+	for _, fn := range hooks {
+		fn()
+	}
+}
+
 // EnableDynamicFields is a typed convenience used by PreviewService.
 func (cm *ConfigManager) EnableDynamicFields() bool {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
 	v, ok := cm.configs["wren.experimental-enable-dynamic-fields"]
 	if !ok {
 		return true // Java default
