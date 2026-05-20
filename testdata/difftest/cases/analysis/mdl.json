@@ -1,0 +1,35 @@
+{
+  "catalog": "test",
+  "schema": "test",
+  "models": [
+    {
+      "name": "customer",
+      "tableReference": { "schema": "main", "table": "customer" },
+      "columns": [
+        { "name": "custkey", "type": "INTEGER", "notNull": true },
+        { "name": "name", "type": "VARCHAR", "notNull": true },
+        { "name": "nationkey", "type": "INTEGER", "notNull": true }
+      ],
+      "primaryKey": "custkey"
+    },
+    {
+      "name": "orders",
+      "tableReference": { "schema": "main", "table": "orders" },
+      "columns": [
+        { "name": "orderkey", "type": "INTEGER", "notNull": true },
+        { "name": "custkey", "type": "INTEGER", "notNull": true },
+        { "name": "orderdate", "type": "DATE", "notNull": true },
+        { "name": "totalprice", "type": "DOUBLE", "notNull": true }
+      ],
+      "primaryKey": "orderkey"
+    }
+  ],
+  "relationships": [
+    {
+      "name": "CustomerOrders",
+      "models": ["customer", "orders"],
+      "joinType": "ONE_TO_MANY",
+      "condition": "customer.custkey = orders.custkey"
+    }
+  ]
+}

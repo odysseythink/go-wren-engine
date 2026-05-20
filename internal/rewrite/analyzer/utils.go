@@ -90,6 +90,19 @@ func toCatalogSchemaTableName(ctx *base.SessionContext, name ast.QualifiedName) 
 	return CatalogSchemaTableName{Catalog: catalog, Schema: schema, Table: obj}, nil
 }
 
+// ToCatalogSchemaTableName is the public variant used by decisionpoint analysis.
+// It panics on >3 parts (same as Java's unchecked usage in analyzer paths).
+func ToCatalogSchemaTableName(ctx *base.SessionContext, qn *ast.QualifiedName) CatalogSchemaTableName {
+	if qn == nil {
+		return CatalogSchemaTableName{}
+	}
+	cstn, err := toCatalogSchemaTableName(ctx, *qn)
+	if err != nil {
+		panic(err)
+	}
+	return cstn
+}
+
 // sortedModels returns models sorted by name.
 func sortedModels(wrenMDL *mdl.WrenMDL) []*dto.Model {
 	models := wrenMDL.ListModels()
