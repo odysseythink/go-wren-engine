@@ -1,0 +1,107 @@
+[
+  {
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "criteria": {
+        "expression": "ON (c.custkey = o.custkey)",
+        "nodeLocation": {
+          "column": 60,
+          "line": 1
+        }
+      },
+      "exprSources": [
+        {
+          "expression": "c.custkey",
+          "nodeLocation": {
+            "column": 60,
+            "line": 1
+          },
+          "sourceColumn": "custkey",
+          "sourceDataset": "customer"
+        },
+        {
+          "expression": "o.custkey",
+          "nodeLocation": {
+            "column": 72,
+            "line": 1
+          },
+          "sourceColumn": "custkey",
+          "sourceDataset": "orders"
+        }
+      ],
+      "left": {
+        "alias": "c",
+        "nodeLocation": {
+          "column": 32,
+          "line": 1
+        },
+        "tableName": "customer",
+        "type": "TABLE"
+      },
+      "nodeLocation": {
+        "column": 32,
+        "line": 1
+      },
+      "right": {
+        "alias": "o",
+        "nodeLocation": {
+          "column": 48,
+          "line": 1
+        },
+        "tableName": "orders",
+        "type": "TABLE"
+      },
+      "type": "INNER_JOIN"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "c.name",
+            "nodeLocation": {
+              "column": 8,
+              "line": 1
+            },
+            "sourceColumn": "name",
+            "sourceDataset": "customer"
+          }
+        ],
+        "expression": "c.name",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "o.orderkey",
+            "nodeLocation": {
+              "column": 16,
+              "line": 1
+            },
+            "sourceColumn": "orderkey",
+            "sourceDataset": "orders"
+          }
+        ],
+        "expression": "o.orderkey",
+        "nodeLocation": {
+          "column": 16,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

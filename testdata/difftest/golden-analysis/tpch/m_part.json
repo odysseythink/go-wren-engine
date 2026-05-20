@@ -1,0 +1,63 @@
+[
+  {
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "nodeLocation": {
+        "column": 27,
+        "line": 1
+      },
+      "tableName": "Part",
+      "type": "TABLE"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "partkey",
+            "nodeLocation": {
+              "column": 8,
+              "line": 1
+            },
+            "sourceColumn": "partkey",
+            "sourceDataset": "Part"
+          }
+        ],
+        "expression": "partkey",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "name",
+            "nodeLocation": {
+              "column": 17,
+              "line": 1
+            },
+            "sourceColumn": "name",
+            "sourceDataset": "Part"
+          }
+        ],
+        "expression": "name",
+        "nodeLocation": {
+          "column": 17,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

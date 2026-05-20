@@ -1,0 +1,107 @@
+[
+  {
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "criteria": {
+        "expression": "ON (l.partkey = p.partkey)",
+        "nodeLocation": {
+          "column": 32,
+          "line": 2
+        }
+      },
+      "exprSources": [
+        {
+          "expression": "p.partkey",
+          "nodeLocation": {
+            "column": 44,
+            "line": 2
+          },
+          "sourceColumn": "partkey",
+          "sourceDataset": "Part"
+        },
+        {
+          "expression": "l.partkey",
+          "nodeLocation": {
+            "column": 32,
+            "line": 2
+          },
+          "sourceColumn": "partkey",
+          "sourceDataset": "Lineitem"
+        }
+      ],
+      "left": {
+        "alias": "l",
+        "nodeLocation": {
+          "column": 6,
+          "line": 2
+        },
+        "tableName": "Lineitem",
+        "type": "TABLE"
+      },
+      "nodeLocation": {
+        "column": 6,
+        "line": 2
+      },
+      "right": {
+        "alias": "p",
+        "nodeLocation": {
+          "column": 22,
+          "line": 2
+        },
+        "tableName": "Part",
+        "type": "TABLE"
+      },
+      "type": "INNER_JOIN"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "l.orderkey",
+            "nodeLocation": {
+              "column": 8,
+              "line": 1
+            },
+            "sourceColumn": "orderkey",
+            "sourceDataset": "Lineitem"
+          }
+        ],
+        "expression": "l.orderkey",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "p.name",
+            "nodeLocation": {
+              "column": 20,
+              "line": 1
+            },
+            "sourceColumn": "name",
+            "sourceDataset": "Part"
+          }
+        ],
+        "expression": "p.name",
+        "nodeLocation": {
+          "column": 20,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

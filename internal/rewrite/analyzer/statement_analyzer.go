@@ -282,6 +282,22 @@ func (v *stmtVisitor) visitAliasedRelation(n *ast.AliasedRelation, scope *Scope)
 	if err != nil {
 		return nil, err
 	}
+	if n.Alias != nil {
+		alias := ast.QualifiedNameOf(n.Alias.Value)
+		fields := relationScope.RelationType().Fields()
+		newFields := make([]*Field, len(fields))
+		for i, f := range fields {
+			newFields[i] = &Field{
+				relationAlias:     &alias,
+				tableName:         f.tableName,
+				columnName:        f.columnName,
+				name:              f.name,
+				sourceDatasetName: f.sourceDatasetName,
+				sourceColumn:      f.sourceColumn,
+			}
+		}
+		return v.createAndAssignScope(n, ScopeBuilderWithParent(scope).RelationType(NewRelationType(newFields)).Build()), nil
+	}
 	return v.createAndAssignScope(n, relationScope), nil
 }
 

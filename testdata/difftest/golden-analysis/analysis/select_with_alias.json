@@ -1,0 +1,40 @@
+[
+  {
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "nodeLocation": {
+        "column": 26,
+        "line": 1
+      },
+      "tableName": "customer",
+      "type": "TABLE"
+    },
+    "selectItems": [
+      {
+        "alias": "k",
+        "exprSources": [
+          {
+            "expression": "custkey",
+            "nodeLocation": {
+              "column": 8,
+              "line": 1
+            },
+            "sourceColumn": "custkey",
+            "sourceDataset": "customer"
+          }
+        ],
+        "expression": "custkey",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

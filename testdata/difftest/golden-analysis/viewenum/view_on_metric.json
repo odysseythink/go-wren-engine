@@ -1,0 +1,43 @@
+[
+  {
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "nodeLocation": {
+        "column": 33,
+        "line": 1
+      },
+      "tableName": "useMetric",
+      "type": "TABLE"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [],
+        "expression": "custkey",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": null,
+        "exprSources": [],
+        "expression": "totalprice",
+        "nodeLocation": {
+          "column": 17,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

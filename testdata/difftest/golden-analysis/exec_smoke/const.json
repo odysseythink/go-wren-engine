@@ -1,0 +1,35 @@
+[
+  {
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "selectItems": [
+      {
+        "alias": "a",
+        "exprSources": [],
+        "expression": "1",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": "b",
+        "exprSources": [],
+        "expression": "'hello'",
+        "nodeLocation": {
+          "column": 16,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

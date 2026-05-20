@@ -1,0 +1,150 @@
+[
+  {
+    "groupByKeys": [
+      [
+        {
+          "exprSources": [],
+          "expression": "c_count",
+          "nodeLocation": {
+            "column": 2,
+            "line": 22
+          }
+        }
+      ]
+    ],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "alias": "c_orders",
+      "body": [
+        {
+          "groupByKeys": [
+            [
+              {
+                "exprSources": [],
+                "expression": "c_custkey",
+                "nodeLocation": {
+                  "column": 4,
+                  "line": 19
+                }
+              }
+            ]
+          ],
+          "isSubqueryOrCte": true,
+          "relation": {
+            "criteria": {
+              "expression": "ON ((c_custkey = o_custkey) AND (NOT (o_comment LIKE '%special%requests%')))",
+              "nodeLocation": {
+                "column": 28,
+                "line": 17
+              }
+            },
+            "exprSources": [],
+            "left": {
+              "nodeLocation": {
+                "column": 4,
+                "line": 15
+              },
+              "tableName": "customer",
+              "type": "TABLE"
+            },
+            "nodeLocation": {
+              "column": 4,
+              "line": 15
+            },
+            "right": {
+              "nodeLocation": {
+                "column": 29,
+                "line": 15
+              },
+              "tableName": "orders",
+              "type": "TABLE"
+            },
+            "type": "LEFT_JOIN"
+          },
+          "selectItems": [
+            {
+              "alias": null,
+              "exprSources": [],
+              "expression": "c_custkey",
+              "nodeLocation": {
+                "column": 4,
+                "line": 12
+              },
+              "properties": {
+                "includeFunctionCall": "false",
+                "includeMathematicalOperation": "false"
+              }
+            },
+            {
+              "alias": null,
+              "exprSources": [],
+              "expression": "count(o_orderkey)",
+              "nodeLocation": {
+                "column": 4,
+                "line": 13
+              },
+              "properties": {
+                "includeFunctionCall": "true",
+                "includeMathematicalOperation": "false"
+              }
+            }
+          ],
+          "sortings": []
+        }
+      ],
+      "nodeLocation": {
+        "column": 2,
+        "line": 10
+      },
+      "type": "SUBQUERY"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [],
+        "expression": "c_count",
+        "nodeLocation": {
+          "column": 2,
+          "line": 7
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": "custdist",
+        "exprSources": [],
+        "expression": "count(*)",
+        "nodeLocation": {
+          "column": 2,
+          "line": 8
+        },
+        "properties": {
+          "includeFunctionCall": "true",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": [
+      {
+        "exprSources": [],
+        "expression": "custdist",
+        "nodeLocation": {
+          "column": 2,
+          "line": 24
+        },
+        "ordering": "DESCENDING"
+      },
+      {
+        "exprSources": [],
+        "expression": "c_count",
+        "nodeLocation": {
+          "column": 2,
+          "line": 25
+        },
+        "ordering": "DESCENDING"
+      }
+    ]
+  }
+]

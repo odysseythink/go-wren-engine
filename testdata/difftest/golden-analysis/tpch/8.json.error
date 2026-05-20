@@ -1,0 +1,1 @@
+{"code":"GENERIC_INTERNAL_ERROR","message":"java.lang.NullPointerException: Cannot invoke \"io.trino.sql.tree.NodeLocation.getLineNumber()\" because \"nodeLocation\" is null"}

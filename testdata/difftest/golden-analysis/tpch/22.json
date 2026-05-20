@@ -1,0 +1,145 @@
+[
+  {
+    "groupByKeys": [
+      [
+        {
+          "exprSources": [],
+          "expression": "cntrycode",
+          "nodeLocation": {
+            "column": 3,
+            "line": 36
+          }
+        }
+      ]
+    ],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "alias": "custsale",
+      "body": [
+        {
+          "filter": {
+            "left": {
+              "exprSources": [],
+              "node": "(substr(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17'))",
+              "nodeLocation": {
+                "column": 27,
+                "line": 16
+              },
+              "type": "EXPR"
+            },
+            "nodeLocation": {
+              "column": 5,
+              "line": 16
+            },
+            "right": {
+              "exprSources": [],
+              "node": "(c_acctbal \u003e (SELECT avg(c_acctbal)\nFROM\n  customer\nWHERE ((c_acctbal \u003e 0E0) AND (substr(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')))\n))",
+              "nodeLocation": {
+                "column": 19,
+                "line": 17
+              },
+              "type": "EXPR"
+            },
+            "type": "AND"
+          },
+          "groupByKeys": [],
+          "isSubqueryOrCte": true,
+          "relation": {
+            "nodeLocation": {
+              "column": 5,
+              "line": 14
+            },
+            "tableName": "customer",
+            "type": "TABLE"
+          },
+          "selectItems": [
+            {
+              "alias": "cntrycode",
+              "exprSources": [],
+              "expression": "substr(c_phone, 1, 2)",
+              "nodeLocation": {
+                "column": 5,
+                "line": 11
+              },
+              "properties": {
+                "includeFunctionCall": "true",
+                "includeMathematicalOperation": "false"
+              }
+            },
+            {
+              "alias": null,
+              "exprSources": [],
+              "expression": "c_acctbal",
+              "nodeLocation": {
+                "column": 5,
+                "line": 12
+              },
+              "properties": {
+                "includeFunctionCall": "false",
+                "includeMathematicalOperation": "false"
+              }
+            }
+          ],
+          "sortings": []
+        }
+      ],
+      "nodeLocation": {
+        "column": 6,
+        "line": 9
+      },
+      "type": "SUBQUERY"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [],
+        "expression": "cntrycode",
+        "nodeLocation": {
+          "column": 3,
+          "line": 6
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": "numcust",
+        "exprSources": [],
+        "expression": "count(*)",
+        "nodeLocation": {
+          "column": 3,
+          "line": 7
+        },
+        "properties": {
+          "includeFunctionCall": "true",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": "totacctbal",
+        "exprSources": [],
+        "expression": "sum(c_acctbal)",
+        "nodeLocation": {
+          "column": 3,
+          "line": 8
+        },
+        "properties": {
+          "includeFunctionCall": "true",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": [
+      {
+        "exprSources": [],
+        "expression": "cntrycode",
+        "nodeLocation": {
+          "column": 3,
+          "line": 38
+        },
+        "ordering": "ASCENDING"
+      }
+    ]
+  }
+]

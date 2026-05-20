@@ -170,7 +170,11 @@ func (b *AstBuilder) VisitQueryNoWith(ctx *generated.QueryNoWithContext) interfa
 		query.Body = body.(ast.QueryBody)
 	}
 	for _, si := range ctx.AllSortItem() {
-		query.OrderBy = append(query.OrderBy, *b.visitSortItem(si))
+		sortItem := *b.visitSortItem(si)
+		query.OrderBy = append(query.OrderBy, sortItem)
+		if qs, ok := query.Body.(*ast.QuerySpecification); ok {
+			qs.OrderBy = append(qs.OrderBy, sortItem)
+		}
 	}
 	if ctx.LIMIT() != nil {
 		if ctx.LimitRowCount() != nil {

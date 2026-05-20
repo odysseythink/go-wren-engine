@@ -24,7 +24,10 @@ func analyzeFilterNode(node ast.Node, parent ast.Node, scope *rewriteAnalyzer.Sc
 		// The parent-is-Logical branch matches recursive descent through
 		// AND/OR. Anything else (e.g., Logical under a Comparison) is a leaf.
 		if parent == nil || isLogical(parent) {
-			if len(le.Terms) == 2 {
+			// Java FilterAnalyzer only handles binary AND/OR. For N-ary (>2)
+			// it takes the first two children and ignores the rest (yes, this
+			// is a real Java behavior — parity means matching it).
+			if len(le.Terms) >= 2 {
 				typ := FilterTypeAnd
 				if le.Operator == ast.LogicalOr {
 					typ = FilterTypeOr
@@ -36,10 +39,6 @@ func analyzeFilterNode(node ast.Node, parent ast.Node, scope *rewriteAnalyzer.Sc
 					le.GetLocation(),
 				)
 			}
-			// N-ary (>2) flatten: Trino parser collapses `a AND b AND c`
-			// into one LogicalExpression with 3 Terms; Java FilterAnalyzer
-			// only handles binary, so >2 falls back to a single leaf. The
-			// formatted output preserves the original SQL form.
 		}
 		return leafFilter(le, scope)
 	}

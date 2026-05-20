@@ -1,0 +1,30 @@
+[
+  {
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "nodeLocation": {
+        "column": 15,
+        "line": 1
+      },
+      "tableName": "useUseMetric",
+      "type": "TABLE"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [],
+        "expression": "*",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

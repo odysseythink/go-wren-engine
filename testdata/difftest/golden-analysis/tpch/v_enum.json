@@ -1,0 +1,22 @@
+[
+  {
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [],
+        "expression": "Status.O",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

@@ -1,0 +1,94 @@
+[
+  {
+    "groupByKeys": [
+      [
+        {
+          "exprSources": [
+            {
+              "expression": "custkey",
+              "nodeLocation": {
+                "column": 47,
+                "line": 1
+              },
+              "sourceColumn": "custkey",
+              "sourceDataset": "orders"
+            }
+          ],
+          "expression": "custkey",
+          "nodeLocation": {
+            "column": 47,
+            "line": 1
+          }
+        }
+      ]
+    ],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "nodeLocation": {
+        "column": 31,
+        "line": 1
+      },
+      "tableName": "orders",
+      "type": "TABLE"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "custkey",
+            "nodeLocation": {
+              "column": 8,
+              "line": 1
+            },
+            "sourceColumn": "custkey",
+            "sourceDataset": "orders"
+          }
+        ],
+        "expression": "custkey",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      },
+      {
+        "alias": null,
+        "exprSources": [],
+        "expression": "count(*)",
+        "nodeLocation": {
+          "column": 17,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "true",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": [
+      {
+        "exprSources": [
+          {
+            "expression": "custkey",
+            "nodeLocation": {
+              "column": 8,
+              "line": 1
+            },
+            "sourceColumn": "custkey",
+            "sourceDataset": "orders"
+          }
+        ],
+        "expression": "custkey",
+        "nodeLocation": {
+          "column": 64,
+          "line": 1
+        },
+        "ordering": "DESCENDING"
+      }
+    ]
+  }
+]

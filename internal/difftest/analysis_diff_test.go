@@ -4,7 +4,14 @@ import (
 	"encoding/json"
 	"flag"
 	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/wren-engine/wren/internal/analyzer"
+	"github.com/wren-engine/wren/internal/analyzer/decisionpoint"
+	"github.com/wren-engine/wren/internal/dto"
+	"github.com/wren-engine/wren/internal/mdl"
+	"github.com/wren-engine/wren/internal/parser"
 )
 
 var acceptAnalysisFlag = flag.Bool("difftest.accept-analysis", false, "rewrite baseline")
@@ -49,7 +56,38 @@ func TestAnalysis(t *testing.T) {
 }
 
 func runAnalysisCase(c Case) (status, detail string) {
-	return "no-golden", "not yet implemented"
+	goldenPath := filepath.Join(goldenAnalysisDir, c.Group, c.Name+".json")
+	if _, err := os.Stat(goldenPath + ".error"); err == nil {
+		return "oracle-error", "Java returned error"
+	}
+	wantJSON, err := os.ReadFile(goldenPath)
+	if err != nil {
+		return "no-golden", "golden missing; run make capture-analysis-golden"
+	}
+
+	wrenMDL, err := mdl.WrenMDLFromJSON(string(c.ManifestJSON))
+	if err != nil {
+		return "fail", "mdl parse: " + err.Error()
+	}
+	stmt, err := parser.ParseSQL(c.SQL)
+	if err != nil {
+		return "fail", "parse: " + err.Error()
+	}
+	ctx := &analyzer.SessionContext{Catalog: wrenMDL.Catalog(), Schema: wrenMDL.Schema()}
+	analyses := decisionpoint.Analyze(stmt, ctx, wrenMDL)
+	dtos := make([]dto.QueryAnalysisDto, len(analyses))
+	for i, a := range analyses {
+		dtos[i] = a.ToDto()
+	}
+	gotJSON, _ := json.Marshal(dtos)
+
+	// Risk #15: tolerate ±1 column drift in deeply-nested NodeLocations
+	// (`Identifier` token positions differ between ANTLR Go and ANTLR Java
+	// because of tokenizer normalization timing).
+	if err := JSONEqualWithOptions(wantJSON, gotJSON, CompareOptions{LooseNodeLocation: true}); err != nil {
+		return "fail", err.Error()
+	}
+	return "pass", ""
 }
 
 func loadBaseline(path string) map[string]string {

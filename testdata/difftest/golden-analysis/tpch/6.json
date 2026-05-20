@@ -1,0 +1,55 @@
+[
+  {
+    "filter": {
+      "left": {
+        "exprSources": [],
+        "node": "(l_shipdate \u003e= date '1994-01-01')",
+        "nodeLocation": {
+          "column": 13,
+          "line": 11
+        },
+        "type": "EXPR"
+      },
+      "nodeLocation": {
+        "column": 2,
+        "line": 11
+      },
+      "right": {
+        "exprSources": [],
+        "node": "(l_shipdate \u003c (date '1995-01-01' + INTERVAL  '1' YEAR))",
+        "nodeLocation": {
+          "column": 17,
+          "line": 12
+        },
+        "type": "EXPR"
+      },
+      "type": "AND"
+    },
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "nodeLocation": {
+        "column": 2,
+        "line": 9
+      },
+      "tableName": "lineitem",
+      "type": "TABLE"
+    },
+    "selectItems": [
+      {
+        "alias": "revenue",
+        "exprSources": [],
+        "expression": "sum((l_extendedprice * l_discount))",
+        "nodeLocation": {
+          "column": 2,
+          "line": 7
+        },
+        "properties": {
+          "includeFunctionCall": "true",
+          "includeMathematicalOperation": "true"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

@@ -1,0 +1,85 @@
+[
+  {
+    "filter": {
+      "left": {
+        "exprSources": [
+          {
+            "expression": "custkey",
+            "nodeLocation": {
+              "column": 33,
+              "line": 1
+            },
+            "sourceColumn": "custkey",
+            "sourceDataset": "customer"
+          }
+        ],
+        "node": "(custkey = 1)",
+        "nodeLocation": {
+          "column": 41,
+          "line": 1
+        },
+        "type": "EXPR"
+      },
+      "nodeLocation": {
+        "column": 33,
+        "line": 1
+      },
+      "right": {
+        "exprSources": [
+          {
+            "expression": "nationkey",
+            "nodeLocation": {
+              "column": 49,
+              "line": 1
+            },
+            "sourceColumn": "nationkey",
+            "sourceDataset": "customer"
+          }
+        ],
+        "node": "(nationkey = 2)",
+        "nodeLocation": {
+          "column": 59,
+          "line": 1
+        },
+        "type": "EXPR"
+      },
+      "type": "AND"
+    },
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "nodeLocation": {
+        "column": 18,
+        "line": 1
+      },
+      "tableName": "customer",
+      "type": "TABLE"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "name",
+            "nodeLocation": {
+              "column": 8,
+              "line": 1
+            },
+            "sourceColumn": "name",
+            "sourceDataset": "customer"
+          }
+        ],
+        "expression": "name",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]

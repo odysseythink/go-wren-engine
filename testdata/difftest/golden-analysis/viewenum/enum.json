@@ -1,0 +1,59 @@
+[
+  {
+    "filter": {
+      "exprSources": [
+        {
+          "expression": "orderstatus",
+          "nodeLocation": {
+            "column": 35,
+            "line": 1
+          },
+          "sourceColumn": "orderstatus",
+          "sourceDataset": "Orders"
+        }
+      ],
+      "node": "(orderstatus = Status.O)",
+      "nodeLocation": {
+        "column": 47,
+        "line": 1
+      },
+      "type": "EXPR"
+    },
+    "groupByKeys": [],
+    "isSubqueryOrCte": false,
+    "relation": {
+      "nodeLocation": {
+        "column": 22,
+        "line": 1
+      },
+      "tableName": "Orders",
+      "type": "TABLE"
+    },
+    "selectItems": [
+      {
+        "alias": null,
+        "exprSources": [
+          {
+            "expression": "orderkey",
+            "nodeLocation": {
+              "column": 8,
+              "line": 1
+            },
+            "sourceColumn": "orderkey",
+            "sourceDataset": "Orders"
+          }
+        ],
+        "expression": "orderkey",
+        "nodeLocation": {
+          "column": 8,
+          "line": 1
+        },
+        "properties": {
+          "includeFunctionCall": "false",
+          "includeMathematicalOperation": "false"
+        }
+      }
+    ],
+    "sortings": []
+  }
+]
