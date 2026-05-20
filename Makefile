@@ -59,3 +59,51 @@ analysis-difftest:
 
 accept-analysis:
 	go test ./internal/difftest/ -run TestAnalysis -v -difftest.accept-analysis
+
+# ── Docker image targets ────────────────────────────────────────
+
+IMAGE_NAME ?= go-wren-engine
+IMAGE_TAG  ?= latest
+
+.PHONY: image image-run image-test image-clean
+
+image:
+	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) -f docker/Dockerfile .
+
+image-run: image
+	docker run --rm -it \
+		-p 8080:8080 \
+		-v "$(PWD)/etc:/usr/src/app/etc" \
+		-e MAX_HEAP_SIZE=512m \
+		-e MIN_HEAP_SIZE=64m \
+		$(IMAGE_NAME):$(IMAGE_TAG)
+
+image-test: image
+	@echo "==> Starting container for smoke test..."
+	@docker rm -f wren-engine-smoke >/dev/null 2>&1 || true
+	@docker run -d --name wren-engine-smoke \
+		-p 8080:8080 \
+		-v "$(PWD)/etc:/usr/src/app/etc" \
+		-e MAX_HEAP_SIZE=512m \
+		-e WARN_DROP_IN_GAPS=0 \
+		$(IMAGE_NAME):$(IMAGE_TAG)
+	@{ \
+		trap 'echo "==> Cleaning up..."; docker kill wren-engine-smoke >/dev/null 2>&1 || true; docker rm -f wren-engine-smoke >/dev/null 2>&1 || true' EXIT; \
+		echo "==> Waiting for service..."; \
+		for i in 1 2 3 4 5 6 7 8 9 10; do \
+			curl -sf http://localhost:8080/v1/config >/dev/null && break; \
+			sleep 1; \
+		done; \
+		curl -sf http://localhost:8080/v1/config >/dev/null || { echo "FAIL: /v1/config unreachable"; exit 1; }; \
+		echo "PASS: /v1/config reachable"; \
+		count=$$(curl -sf http://localhost:8080/v1/config | grep -o '"name"' | wc -l | tr -d ' '); \
+		[ "$$count" -eq 11 ] || { echo "FAIL: expected 11 entries, got $$count"; exit 1; }; \
+		echo "PASS: 11 config entries"; \
+		type=$$(curl -sf http://localhost:8080/v1/config/wren.datasource.type | grep -o '"value":"[^"]*"' | cut -d'"' -f4); \
+		[ "$$type" = "DUCKDB" ] || { echo "FAIL: expected DUCKDB, got $$type"; exit 1; }; \
+		echo "PASS: datasource type is DUCKDB"; \
+		echo "==> Smoke test complete."; \
+	}
+
+image-clean:
+	docker rmi $(IMAGE_NAME):$(IMAGE_TAG) 2>/dev/null || true
