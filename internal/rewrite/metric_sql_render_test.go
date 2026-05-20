@@ -24,7 +24,8 @@ func metricMDL(t *testing.T) *mdl.WrenMDL {
 		Metrics: []dto.Metric{
 			{Name: "Revenue", BaseObject: "Orders",
 				Dimension: []dto.Column{{Name: "custkey", Type: "int4", Expression: "custkey"}},
-				Measure:   []dto.Column{{Name: "totalprice", Type: "int4", Expression: "sum(totalprice)"}}},
+				Measure:   []dto.Column{{Name: "totalprice", Type: "int4", Expression: "sum(totalprice)"}},
+				TimeGrain: []dto.TimeGrain{{Name: "orderdate", RefColumn: "orderdate", DateParts: []dto.TimeUnit{dto.TimeUnitYear, dto.TimeUnitMonth}}}},
 			{Name: "RevenueByCustomer", BaseObject: "Revenue",
 				Dimension: []dto.Column{{Name: "custkey", Type: "int4", Expression: "custkey"}},
 				Measure:   []dto.Column{{Name: "totalprice", Type: "int4", Expression: "sum(totalprice)"}}},

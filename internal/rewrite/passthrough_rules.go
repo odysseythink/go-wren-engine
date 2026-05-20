@@ -15,14 +15,6 @@ func (r *GenerateViewRewrite) Apply(root ast.Statement, _ *base.SessionContext, 
 	return root, nil
 }
 
-// MetricRollupRewrite is a P3a pass-through stub for Java MetricRollupRewrite.
-// Real implementation lands in P3b.
-type MetricRollupRewrite struct{}
-
-func (r *MetricRollupRewrite) Apply(root ast.Statement, _ *base.SessionContext, _ *mdl.AnalyzedMDL) (ast.Statement, error) {
-	return root, nil
-}
-
 // EnumRewrite is a P3a pass-through stub for Java EnumRewrite.
 // Real implementation lands in P3c.
 type EnumRewrite struct{}
