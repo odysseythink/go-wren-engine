@@ -82,3 +82,43 @@ func TestEnumRewrite_MissingEnumValueErrors(t *testing.T) {
 		t.Errorf("error should mention NOPE and Status, got: %v", err)
 	}
 }
+
+func TestEnumRewrite_CaseSensitiveNoMatch(t *testing.T) {
+	wrenMDL := viewenumMDL(t)
+	// status.o and STATUS.O must NOT match (risk #3: strict case-sensitive)
+	for _, sql := range []string{
+		"SELECT status.o FROM t",
+		"SELECT STATUS.O FROM t",
+	} {
+		stmt, _ := parser.ParseSQL(sql)
+		out, err := (&EnumRewrite{}).Apply(stmt, nil, mdl.NewAnalyzedMDL(wrenMDL))
+		if err != nil {
+			t.Fatalf("%s: Apply: %v", sql, err)
+		}
+		got := formatter.FormatSQL(out)
+		if !strings.Contains(got, "status") && !strings.Contains(got, "STATUS") {
+			t.Errorf("%s: case-mismatched enum should be untouched:\n%s", sql, got)
+		}
+	}
+}
+
+func TestEnumRewrite_ValueFallbackToName(t *testing.T) {
+	// Build an MDL where enum value has explicit empty value → should fall back to name
+	mdlJSON := `{"catalog":"wren","schema":"test","models":[],"relationships":[],"metrics":[],"cumulativeMetrics":[],"enumDefinitions":[{"name":"X","values":[{"name":"A","value":""},{"name":"B","value":"bbb"}]}],"views":[],"macros":[]}`
+	wrenMDL, err := mdl.WrenMDLFromJSON(mdlJSON)
+	if err != nil {
+		t.Fatalf("parse mdl: %v", err)
+	}
+	stmt, _ := parser.ParseSQL("SELECT X.A, X.B FROM t")
+	out, err := (&EnumRewrite{}).Apply(stmt, nil, mdl.NewAnalyzedMDL(wrenMDL))
+	if err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	got := formatter.FormatSQL(out)
+	if !strings.Contains(got, "'A'") {
+		t.Errorf("empty value should fall back to name 'A':\n%s", got)
+	}
+	if !strings.Contains(got, "'bbb'") {
+		t.Errorf("explicit value 'bbb' should be used:\n%s", got)
+	}
+}

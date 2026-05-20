@@ -3,7 +3,7 @@ package rewrite
 import "github.com/wren-engine/wren/internal/parser/ast"
 
 // getWithQuery wraps a descriptor as a WITH query with a delimited CTE name.
-// Mirrors WithRewriter.getWithQuery (Java new Identifier(name, true)). Risk #6.
+// Mirrors WithRewriter.getWithQuery (Java new Identifier(name, true)). Risk #7.
 func getWithQuery(d QueryDescriptor) ast.WithQuery {
 	return ast.WithQuery{
 		Name:  &ast.Identifier{Value: d.Name(), Delimited: true},
