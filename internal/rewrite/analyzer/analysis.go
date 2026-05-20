@@ -184,3 +184,28 @@ func (a *Analysis) GetMetricRollup(n ast.Node) (*MetricRollupInfo, bool) {
 	info, ok := a.metricRollups[ast.NodeRef{Node: n}]
 	return info, ok
 }
+
+// WrenObjectNames returns the union of model / metric / cumulative metric / view
+// names referenced by this analysis, sorted by name (deterministic).
+// Mirrors Java Analysis.getWrenObjectNames.
+func (a *Analysis) WrenObjectNames() []string {
+	set := map[string]bool{}
+	for _, m := range a.models {
+		set[m.Name] = true
+	}
+	for _, m := range a.metrics {
+		set[m.Name] = true
+	}
+	for _, c := range a.cumulativeMetrics {
+		set[c.Name] = true
+	}
+	for _, v := range a.views {
+		set[v.Name] = true
+	}
+	out := make([]string, 0, len(set))
+	for k := range set {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}

@@ -61,6 +61,17 @@ func Analyze(analysis *Analysis, statement ast.Statement, ctx *base.SessionConte
 	}
 	analysis.AddCumulativeMetrics(cumulativeMetrics)
 
+	// views referenced as plain tables
+	var views []*dto.View
+	for _, t := range analysis.Tables() {
+		if t.Catalog == wrenMDL.Catalog() && t.Schema == wrenMDL.Schema() {
+			if v, ok := wrenMDL.GetView(t.Table); ok {
+				views = append(views, v)
+			}
+		}
+	}
+	analysis.AddViews(views)
+
 	return queryScope, nil
 }
 
