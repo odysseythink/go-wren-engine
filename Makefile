@@ -41,3 +41,12 @@ duckdb-difftest:
 
 duckdb-difftest-accept:
 	go test ./internal/difftest/... -run TestDifferentialDuckDB -difftest.accept-duckdb
+
+capture-envelope-golden:
+	./tools/capture-envelope-golden.sh
+
+envelope-difftest:
+	go test ./internal/difftest/... -run TestEnvelopeDifferential -v
+
+envelope-difftest-accept:
+	go test ./internal/difftest/... -run TestEnvelopeDifferential -difftest.accept-envelope

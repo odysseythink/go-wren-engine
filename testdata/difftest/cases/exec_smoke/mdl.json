@@ -1,0 +1,11 @@
+{
+  "catalog": "wren",
+  "schema": "main",
+  "models": [],
+  "relationships": [],
+  "metrics": [],
+  "cumulativeMetrics": [],
+  "enumDefinitions": [],
+  "views": [],
+  "macros": []
+}
