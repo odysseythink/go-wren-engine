@@ -17,8 +17,8 @@ type QueryAnalysisDto struct {
 type ColumnAnalysisDto struct {
 	// Alias is *string without omitempty so nil → "alias": null (matches Java
 	// Jackson which emits null for Optional.empty()). Do NOT add omitempty.
-	Alias *string `json:"alias"`
-	Expression string `json:"expression"`
+	Alias      *string `json:"alias"`
+	Expression string  `json:"expression"`
 	// Properties is always emitted (Java emits {} for an empty Map; class-level
 	// NON_NULL only skips null, not empty). Mapper layer must replace nil with
 	// an empty map before serialization — see risk #9.
@@ -45,12 +45,12 @@ type JoinCriteriaDto struct {
 }
 
 type FilterAnalysisDto struct {
-	Type         string            `json:"type"`
+	Type         string             `json:"type"`
 	Left         *FilterAnalysisDto `json:"left,omitempty"`
 	Right        *FilterAnalysisDto `json:"right,omitempty"`
-	Node         string            `json:"node,omitempty"`
-	NodeLocation *NodeLocationDto  `json:"nodeLocation"`
-	ExprSources  *[]ExprSourceDto  `json:"exprSources,omitempty"`
+	Node         string             `json:"node,omitempty"`
+	NodeLocation *NodeLocationDto   `json:"nodeLocation"`
+	ExprSources  *[]ExprSourceDto   `json:"exprSources,omitempty"`
 }
 
 type SortItemAnalysisDto struct {

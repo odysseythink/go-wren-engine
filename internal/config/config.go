@@ -106,17 +106,17 @@ func (e ErrUnknownConfigKey) Error() string { return "Config not found: " + e.Ke
 // LoadFromEnv overrides defaults with environment variables.
 func (cm *ConfigManager) LoadFromEnv() {
 	envMap := map[string]string{
-		"WREN_DIRECTORY":                         "wren.directory",
-		"WREN_DATASOURCE_TYPE":                   "wren.datasource.type",
+		"WREN_DIRECTORY":                          "wren.directory",
+		"WREN_DATASOURCE_TYPE":                    "wren.datasource.type",
 		"WREN_EXPERIMENTAL_ENABLE_DYNAMIC_FIELDS": "wren.experimental-enable-dynamic-fields",
-		"WREN_DUCKDB_MEMORY_LIMIT":               "duckdb.memory-limit",
-		"WREN_DUCKDB_HOME_DIRECTORY":             "duckdb.home-directory",
-		"WREN_DUCKDB_TEMP_DIRECTORY":             "duckdb.temp-directory",
-		"WREN_DUCKDB_MAX_CONCURRENT_TASKS":       "duckdb.max-concurrent-tasks",
-		"WREN_DUCKDB_MAX_CACHE_QUERY_TIMEOUT":    "duckdb.max-cache-query-timeout",
-		"WREN_DUCKDB_CACHE_TASK_RETRY_DELAY":     "duckdb.cache-task-retry-delay",
-		"WREN_DUCKDB_CONNECTOR_INIT_SQL_PATH":    "duckdb.connector.init-sql-path",
-		"WREN_DUCKDB_CONNECTOR_SESSION_SQL_PATH": "duckdb.connector.session-sql-path",
+		"WREN_DUCKDB_MEMORY_LIMIT":                "duckdb.memory-limit",
+		"WREN_DUCKDB_HOME_DIRECTORY":              "duckdb.home-directory",
+		"WREN_DUCKDB_TEMP_DIRECTORY":              "duckdb.temp-directory",
+		"WREN_DUCKDB_MAX_CONCURRENT_TASKS":        "duckdb.max-concurrent-tasks",
+		"WREN_DUCKDB_MAX_CACHE_QUERY_TIMEOUT":     "duckdb.max-cache-query-timeout",
+		"WREN_DUCKDB_CACHE_TASK_RETRY_DELAY":      "duckdb.cache-task-retry-delay",
+		"WREN_DUCKDB_CONNECTOR_INIT_SQL_PATH":     "duckdb.connector.init-sql-path",
+		"WREN_DUCKDB_CONNECTOR_SESSION_SQL_PATH":  "duckdb.connector.session-sql-path",
 	}
 	for env, key := range envMap {
 		if v := os.Getenv(env); v != "" {

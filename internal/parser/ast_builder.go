@@ -146,7 +146,7 @@ func (b *AstBuilder) VisitStatementDefault(ctx *generated.StatementDefaultContex
 }
 
 func (b *AstBuilder) VisitQuery(ctx *generated.QueryContext) interface{} {
-	query := &ast.Query{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	query := &ast.Query{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	if ctx.With() != nil {
 		query.With = b.visit(ctx.With()).(*ast.With)
 	}
@@ -159,7 +159,7 @@ func (b *AstBuilder) VisitQuery(ctx *generated.QueryContext) interface{} {
 }
 
 func (b *AstBuilder) VisitQueryNoWith(ctx *generated.QueryNoWithContext) interface{} {
-	query := &ast.Query{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	query := &ast.Query{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	body := b.visitStatement(ctx.QueryTerm())
 	if body == nil {
 		panic(fmt.Sprintf("unsupported query term: %T", ctx.QueryTerm()))
@@ -214,7 +214,7 @@ func (b *AstBuilder) VisitSetOperation(ctx *generated.SetOperationContext) inter
 	if ctx.SetQuantifier() != nil && ctx.SetQuantifier().ALL() != nil {
 		distinct = false
 	}
-	return &ast.SetOperation{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.SetOperation{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Operator:  op,
 		Distinct:  distinct,
 		Relations: []ast.Relation{left, right},
@@ -230,8 +230,8 @@ func (b *AstBuilder) VisitSubquery(ctx *generated.SubqueryContext) interface{} {
 }
 
 func (b *AstBuilder) VisitQuerySpecification(ctx *generated.QuerySpecificationContext) interface{} {
-	qs := &ast.QuerySpecification{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
-	selectNode := &ast.Select{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	qs := &ast.QuerySpecification{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
+	selectNode := &ast.Select{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	if ctx.SetQuantifier() != nil {
 		selectNode.Distinct = ctx.SetQuantifier().DISTINCT() != nil
 	}
@@ -297,7 +297,7 @@ func (b *AstBuilder) VisitSelectSingle(ctx *generated.SelectSingleContext) inter
 }
 
 func (b *AstBuilder) VisitSelectAll(ctx *generated.SelectAllContext) interface{} {
-	ac := &ast.AllColumns{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	ac := &ast.AllColumns{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	if ctx.PrimaryExpression() != nil {
 		expr := b.visitExpression(ctx.PrimaryExpression())
 		qn := ast.GetQualifiedName(expr)
@@ -317,7 +317,7 @@ func (b *AstBuilder) VisitRelationDefault(ctx *generated.RelationDefaultContext)
 }
 
 func (b *AstBuilder) VisitJoinRelation(ctx *generated.JoinRelationContext) interface{} {
-	join := &ast.Join{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	join := &ast.Join{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	join.Left = b.visitRelation(ctx.GetLeft())
 	if ctx.GetRight() != nil {
 		join.Right = b.visit(ctx.GetRight()).(ast.Relation)
@@ -357,13 +357,13 @@ func (b *AstBuilder) VisitJoinCriteria(ctx *generated.JoinCriteriaContext) inter
 		return &ast.JoinOn{BaseNode: ast.BaseNode{Location: locOf(ctx)}, Expression: b.visitExpression(ctx.BooleanExpression())}
 	}
 	if ctx.USING() != nil {
-		using := &ast.JoinUsing{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+		using := &ast.JoinUsing{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 		for _, id := range ctx.AllIdentifier() {
 			using.Columns = append(using.Columns, *b.visitIdentifier(id))
 		}
 		return using
 	}
-	return &ast.NaturalJoin{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	return &ast.NaturalJoin{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 }
 
 func (b *AstBuilder) VisitAliasedRelation(ctx *generated.AliasedRelationContext) interface{} {
@@ -445,7 +445,7 @@ func (b *AstBuilder) VisitLogicalNot(ctx *generated.LogicalNotContext) interface
 // VisitOr flattens nested OR contexts into one N-ary LogicalExpression,
 // matching trino AstBuilder.visitOr.
 func (b *AstBuilder) VisitOr(ctx *generated.OrContext) interface{} {
-	return &ast.LogicalExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.LogicalExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Operator: ast.LogicalOr,
 		Terms:    b.flattenLogical(ctx, ast.LogicalOr),
 	}
@@ -454,7 +454,7 @@ func (b *AstBuilder) VisitOr(ctx *generated.OrContext) interface{} {
 // VisitAnd flattens nested AND contexts into one N-ary LogicalExpression,
 // matching trino AstBuilder.visitAnd.
 func (b *AstBuilder) VisitAnd(ctx *generated.AndContext) interface{} {
-	return &ast.LogicalExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.LogicalExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Operator: ast.LogicalAnd,
 		Terms:    b.flattenLogical(ctx, ast.LogicalAnd),
 	}
@@ -529,7 +529,7 @@ func (b *AstBuilder) VisitComparison(ctx *generated.ComparisonContext) interface
 
 func (b *AstBuilder) VisitBetween(ctx *generated.BetweenContext) interface{} {
 	values := ctx.AllValueExpression()
-	return &ast.BetweenPredicate{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.BetweenPredicate{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Min: values[len(values)-2].Accept(b).(ast.Expression),
 		Max: values[len(values)-1].Accept(b).(ast.Expression),
 		Not: ctx.NOT() != nil,
@@ -537,7 +537,7 @@ func (b *AstBuilder) VisitBetween(ctx *generated.BetweenContext) interface{} {
 }
 
 func (b *AstBuilder) VisitInList(ctx *generated.InListContext) interface{} {
-	list := &ast.InListExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	list := &ast.InListExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	for _, expr := range ctx.AllExpression() {
 		list.Values = append(list.Values, b.visitExpression(expr))
 	}
@@ -583,7 +583,7 @@ func (b *AstBuilder) VisitQuantifiedComparison(ctx *generated.QuantifiedComparis
 			op = ast.ComparisonGreaterEqual
 		}
 	}
-	return &ast.QuantifiedComparison{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.QuantifiedComparison{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Operator:   op,
 		Quantifier: strings.ToUpper(ctx.ComparisonQuantifier().GetText()),
 		Value:      b.visitExpression(ctx.FunctionExpression()),
@@ -654,7 +654,7 @@ func (b *AstBuilder) VisitDereference(ctx *generated.DereferenceContext) interfa
 func (b *AstBuilder) VisitFunctionCall(ctx *generated.FunctionCallContext) interface{} {
 	fc := &ast.FunctionCall{BaseNode: ast.BaseNode{Location: locOf(ctx)}, Name: b.visit(ctx.QualifiedName()).(ast.QualifiedName)}
 	if ctx.ASTERISK() != nil {
-		fc.Arguments = append(fc.Arguments, &ast.StarExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}, })
+		fc.Arguments = append(fc.Arguments, &ast.StarExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}})
 	} else {
 		for _, expr := range ctx.AllExpression() {
 			fc.Arguments = append(fc.Arguments, b.visitExpression(expr))
@@ -718,7 +718,7 @@ func (b *AstBuilder) VisitBooleanLiteral(ctx *generated.BooleanLiteralContext) i
 }
 
 func (b *AstBuilder) VisitNullLiteral(ctx *generated.NullLiteralContext) interface{} {
-	return &ast.NullLiteral{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	return &ast.NullLiteral{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 }
 
 func (b *AstBuilder) VisitSubqueryExpression(ctx *generated.SubqueryExpressionContext) interface{} {
@@ -807,7 +807,7 @@ func (b *AstBuilder) VisitSortItem(ctx *generated.SortItemContext) interface{} {
 // --------------------------------------------------------------------------
 
 func (b *AstBuilder) VisitGroupBy(ctx *generated.GroupByContext) interface{} {
-	gb := &ast.GroupBy{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	gb := &ast.GroupBy{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	for _, ge := range ctx.AllGroupingElement() {
 		result := b.visit(ge)
 		if result == nil {
@@ -867,7 +867,7 @@ func (b *AstBuilder) VisitTypeParameter(ctx *generated.TypeParameterContext) int
 // --------------------------------------------------------------------------
 
 func (b *AstBuilder) VisitOver(ctx *generated.OverContext) interface{} {
-	win := &ast.Window{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	win := &ast.Window{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	if ctx.WindowSpecification() != nil {
 		ws := ctx.WindowSpecification()
 		for _, expr := range ws.AllExpression() {
@@ -884,7 +884,7 @@ func (b *AstBuilder) VisitOver(ctx *generated.OverContext) interface{} {
 }
 
 func (b *AstBuilder) VisitWindowFrame(ctx *generated.WindowFrameContext) interface{} {
-	frame := &ast.WindowFrame{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	frame := &ast.WindowFrame{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	if ctx.FrameExtent() != nil {
 		result := b.visit(ctx.FrameExtent())
 		if result != nil {
@@ -957,7 +957,7 @@ func (b *AstBuilder) VisitFunctionRelation(ctx *generated.FunctionRelationContex
 	for _, expr := range fe.AllExpression() {
 		args = append(args, b.visitExpression(expr))
 	}
-	return &ast.FunctionRelation{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.FunctionRelation{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Name:      name,
 		Arguments: args,
 	}
@@ -967,7 +967,7 @@ func (b *AstBuilder) VisitSampledRelation(ctx *generated.SampledRelationContext)
 	if ctx.TABLESAMPLE() == nil {
 		return b.visit(ctx.PatternRecognition())
 	}
-	return &ast.SampledRelation{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.SampledRelation{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Relation:         b.visitRelation(ctx.PatternRecognition()),
 		SampleType:       ctx.SampleType().GetText(),
 		SamplePercentage: b.visitExpression(ctx.Expression()),
@@ -988,7 +988,7 @@ func (b *AstBuilder) VisitSimpleCase(ctx *generated.SimpleCaseContext) interface
 
 // VisitSearchedCase mirrors trino AstBuilder.visitSearchedCase.
 func (b *AstBuilder) VisitSearchedCase(ctx *generated.SearchedCaseContext) interface{} {
-	c := &ast.SearchedCaseExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	c := &ast.SearchedCaseExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	for _, wc := range ctx.AllWhenClause() {
 		c.WhenClauses = append(c.WhenClauses, *b.visitWhenClause(wc))
 	}
@@ -1000,7 +1000,7 @@ func (b *AstBuilder) VisitSearchedCase(ctx *generated.SearchedCaseContext) inter
 
 // VisitWhenClause mirrors trino AstBuilder.visitWhenClause.
 func (b *AstBuilder) VisitWhenClause(ctx *generated.WhenClauseContext) interface{} {
-	return &ast.WhenClause{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.WhenClause{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Operand: b.visitExpression(ctx.GetCondition()),
 		Result:  b.visitExpression(ctx.GetResult()),
 	}
@@ -1016,7 +1016,7 @@ func (b *AstBuilder) visitWhenClause(tree antlr.ParseTree) *ast.WhenClause {
 
 // VisitExtract mirrors trino AstBuilder.visitExtract: the field is upper-cased.
 func (b *AstBuilder) VisitExtract(ctx *generated.ExtractContext) interface{} {
-	return &ast.ExtractExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.ExtractExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Field:      strings.ToUpper(ctx.Identifier().GetText()),
 		Expression: b.visitExpression(ctx.ValueExpression()),
 	}
@@ -1024,7 +1024,7 @@ func (b *AstBuilder) VisitExtract(ctx *generated.ExtractContext) interface{} {
 
 // VisitSubscript mirrors trino AstBuilder.visitSubscript.
 func (b *AstBuilder) VisitSubscript(ctx *generated.SubscriptContext) interface{} {
-	return &ast.SubscriptExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	return &ast.SubscriptExpression{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Base:  b.visitExpression(ctx.GetValue()),
 		Index: b.visitExpression(ctx.GetIndex()),
 	}
@@ -1033,7 +1033,7 @@ func (b *AstBuilder) VisitSubscript(ctx *generated.SubscriptContext) interface{}
 // VisitArrayConstructor mirrors trino AstBuilder.visitArrayConstructor:
 // ARRAY[expr, expr, ...].
 func (b *AstBuilder) VisitArrayConstructor(ctx *generated.ArrayConstructorContext) interface{} {
-	ac := &ast.ArrayConstructor{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	ac := &ast.ArrayConstructor{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	for _, expr := range ctx.AllExpression() {
 		ac.Values = append(ac.Values, b.visitExpression(expr))
 	}
@@ -1070,7 +1070,7 @@ func (b *AstBuilder) VisitIntervalLiteral(ctx *generated.IntervalLiteralContext)
 	} else if iv.PLUS() != nil {
 		sign = "+"
 	}
-	interval := &ast.IntervalLiteral{BaseNode: ast.BaseNode{Location: locOf(ctx)}, 
+	interval := &ast.IntervalLiteral{BaseNode: ast.BaseNode{Location: locOf(ctx)},
 		Sign:  sign,
 		Value: stripQuotes(iv.String_().GetText()),
 		From:  iv.IntervalField(0).GetText(),
@@ -1097,7 +1097,7 @@ func (b *AstBuilder) VisitMultipleGroupingSets(ctx *generated.MultipleGroupingSe
 
 // VisitInlineTable mirrors trino AstBuilder.visitInlineTable.
 func (b *AstBuilder) VisitInlineTable(ctx *generated.InlineTableContext) interface{} {
-	vals := &ast.Values{BaseNode: ast.BaseNode{Location: locOf(ctx)}, }
+	vals := &ast.Values{BaseNode: ast.BaseNode{Location: locOf(ctx)}}
 	for _, expr := range ctx.AllExpression() {
 		row := b.visitExpression(expr)
 		if r, ok := row.(*ast.Row); ok {

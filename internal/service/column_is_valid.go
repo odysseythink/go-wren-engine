@@ -30,7 +30,7 @@ func (r *ColumnIsValidRule) Validate(ctx context.Context, params map[string]any,
 	}
 	columnName, _ := params["columnName"].(string)
 	if columnName == "" {
-		return []ValidationResult{errorResult(ruleColumnIsValid + ":" + modelName, start, "Column name is required")}, nil
+		return []ValidationResult{errorResult(ruleColumnIsValid+":"+modelName, start, "Column name is required")}, nil
 	}
 
 	name := fmt.Sprintf("%s:%s:%s", ruleColumnIsValid, modelName, columnName)
