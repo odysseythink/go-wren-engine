@@ -1,4 +1,4 @@
-.PHONY: build test clean generate capture-golden difftest difftest-accept capture-format-golden format-golden format-accept capture-duckdb-golden duckdb-difftest duckdb-difftest-accept
+.PHONY: build test clean generate capture-golden difftest difftest-accept capture-format-golden format-golden format-accept capture-duckdb-golden duckdb-difftest duckdb-difftest-accept capture-envelope-golden envelope-difftest envelope-difftest-accept capture-analysis-golden analysis-difftest accept-analysis oracle-up oracle-down oracle-logs capture-all-golden rebaseline
 
 build:
 	go build -o bin/wren-server ./cmd/wren-server
@@ -59,6 +59,37 @@ analysis-difftest:
 
 accept-analysis:
 	go test ./internal/difftest/ -run TestAnalysis -v -difftest.accept-analysis
+
+# ── Oracle lifecycle ────────────────────────────────────────────
+
+oracle-up:
+	./tools/oracle-up.sh
+
+oracle-down:
+	./tools/oracle-down.sh
+
+oracle-logs:
+	docker logs --tail 50 wren-oracle
+
+# ── Full capture pipeline ──────────────────────────────────────
+
+capture-all-golden: oracle-up
+	go run ./cmd/capture-golden -addr http://localhost:18080
+	go run ./cmd/capture-duckdb-golden -addr http://localhost:18080
+	go run ./cmd/capture-envelope-golden -addr http://localhost:18080 --groups all
+	go run ./cmd/capture-analysis-golden -addr http://localhost:18080
+
+rebaseline: capture-all-golden
+	cp testdata/difftest/baseline.json testdata/difftest/baseline.json.bak
+	cp testdata/difftest/baseline-duckdb.json testdata/difftest/baseline-duckdb.json.bak
+	cp testdata/difftest/baseline-envelope.json testdata/difftest/baseline-envelope.json.bak
+	cp testdata/difftest/baseline-analysis.json testdata/difftest/baseline-analysis.json.bak
+	go test ./internal/difftest/... -run TestDifferential -difftest.accept -count=1
+	go test ./internal/difftest/... -run TestDifferentialDuckDB -difftest.accept-duckdb -count=1
+	go test ./internal/difftest/... -run TestEnvelopeDifferential -difftest.accept-envelope -count=1
+	go test ./internal/difftest/... -run TestAnalysis -difftest.accept-analysis -count=1
+	@echo "Rebaseline complete. Review diffs with:"
+	@echo "  diff -u testdata/difftest/baseline.json.bak testdata/difftest/baseline.json"
 
 # ── Docker image targets ────────────────────────────────────────
 
