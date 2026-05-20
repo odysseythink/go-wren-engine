@@ -23,7 +23,7 @@ func TestPreviewEndpoint_Synthetic(t *testing.T) {
 	t.Cleanup(func() { _ = md.Close() })
 
 	preview := service.NewPreviewService(md, &converter.DuckDBSqlConverter{}, config.NewConfigManager())
-	validation := service.NewValidationService()
+	validation := service.NewValidationService(md, &converter.DuckDBSqlConverter{})
 	h := server.NewMDLHandler(preview, validation)
 
 	r := chi.NewRouter()
@@ -59,7 +59,7 @@ func TestDryPlanV2_Base64Manifest(t *testing.T) {
 	t.Cleanup(func() { _ = md.Close() })
 
 	preview := service.NewPreviewService(md, &converter.DuckDBSqlConverter{}, config.NewConfigManager())
-	h := server.NewMDLHandler(preview, service.NewValidationService())
+	h := server.NewMDLHandler(preview, service.NewValidationService(md, &converter.DuckDBSqlConverter{}))
 
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
@@ -92,7 +92,7 @@ func TestDryRunEndpoint_ReturnsColumnsOnly(t *testing.T) {
 	t.Cleanup(func() { _ = md.Close() })
 
 	preview := service.NewPreviewService(md, &converter.DuckDBSqlConverter{}, config.NewConfigManager())
-	h := server.NewMDLHandler(preview, service.NewValidationService())
+	h := server.NewMDLHandler(preview, service.NewValidationService(md, &converter.DuckDBSqlConverter{}))
 
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
@@ -122,7 +122,7 @@ func TestDryPlanEndpoint_ModelingOnlyFalse_GoesThroughConverter(t *testing.T) {
 	t.Cleanup(func() { _ = md.Close() })
 
 	preview := service.NewPreviewService(md, &converter.DuckDBSqlConverter{}, config.NewConfigManager())
-	h := server.NewMDLHandler(preview, service.NewValidationService())
+	h := server.NewMDLHandler(preview, service.NewValidationService(md, &converter.DuckDBSqlConverter{}))
 
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
