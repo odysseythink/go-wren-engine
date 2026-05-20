@@ -21,7 +21,7 @@ func main() {
 	var sqlConverter converter.SqlConverter = &converter.DuckDBSqlConverter{}
 
 	previewService := service.NewPreviewService(metadata, sqlConverter, configMgr)
-	validationService := service.NewValidationService()
+	validationService := service.NewValidationService(metadata, sqlConverter)
 
 	srv := server.NewServer(fmt.Sprintf(":%d", configMgr.Port()))
 
