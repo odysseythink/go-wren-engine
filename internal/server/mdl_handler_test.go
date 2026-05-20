@@ -105,7 +105,10 @@ func TestDryRunEndpoint_ReturnsColumnsOnly(t *testing.T) {
 	})
 	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/v1/mdl/dry-run", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	resp, _ := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("dry-run: %v", err)
+	}
 	defer resp.Body.Close()
 	var cols []map[string]string
 	_ = json.NewDecoder(resp.Body).Decode(&cols)
@@ -133,7 +136,10 @@ func TestDryPlanEndpoint_ModelingOnlyFalse_GoesThroughConverter(t *testing.T) {
 	})
 	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/v1/mdl/dry-plan", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	resp, _ := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("dry-plan: %v", err)
+	}
 	defer resp.Body.Close()
 	out, _ := io.ReadAll(resp.Body)
 	// modelingOnly=false → should have been lowercased by RewriteFunction.

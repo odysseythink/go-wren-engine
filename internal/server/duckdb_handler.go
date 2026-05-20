@@ -6,18 +6,18 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/wren-engine/wren/internal/connector"
+	"github.com/wren-engine/wren/internal/connector/duckdb"
 	"github.com/wren-engine/wren/internal/dto"
 )
 
 // DuckDBHandler handles DuckDB data source endpoints.
 type DuckDBHandler struct {
-	metadata connector.Metadata
+	metadata *duckdb.Metadata
 }
 
 // NewDuckDBHandler creates a new DuckDBHandler.
-func NewDuckDBHandler(metadata connector.Metadata) *DuckDBHandler {
-	return &DuckDBHandler{metadata: metadata}
+func NewDuckDBHandler(m *duckdb.Metadata) *DuckDBHandler {
+	return &DuckDBHandler{metadata: m}
 }
 
 // RegisterRoutes registers DuckDB routes.
@@ -50,45 +50,51 @@ func (h *DuckDBHandler) Query(w http.ResponseWriter, r *http.Request) {
 	for result.Next() {
 		data = append(data, result.Get())
 	}
-	json.NewEncoder(w).Encode(dto.PreviewResponse{
-		Columns: pcols,
-		Data:    data,
-	})
+	json.NewEncoder(w).Encode(dto.PreviewResponse{Columns: pcols, Data: data})
 }
-
-// TODO: Implement proper settings storage
-var initSQL, sessionSQL string
 
 func (h *DuckDBHandler) GetInitSQL(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(initSQL))
+	w.Write([]byte(h.metadata.InitSQL()))
 }
 
 func (h *DuckDBHandler) SetInitSQL(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	initSQL = string(body)
+	if err := h.metadata.SetInitSQL(r.Context(), string(body)); err != nil {
+		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: err.Error()})
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *DuckDBHandler) PatchInitSQL(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	initSQL += "\n" + string(body)
+	if err := h.metadata.AppendInitSQL(r.Context(), string(body)); err != nil {
+		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: err.Error()})
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *DuckDBHandler) GetSessionSQL(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(sessionSQL))
+	w.Write([]byte(h.metadata.SessionSQL()))
 }
 
 func (h *DuckDBHandler) SetSessionSQL(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	sessionSQL = string(body)
+	if err := h.metadata.SetSessionSQL(r.Context(), string(body)); err != nil {
+		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: err.Error()})
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *DuckDBHandler) PatchSessionSQL(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	sessionSQL += "\n" + string(body)
+	if err := h.metadata.AppendSessionSQL(r.Context(), string(body)); err != nil {
+		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: err.Error()})
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }

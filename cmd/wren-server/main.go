@@ -18,7 +18,8 @@ func main() {
 	cfg := configMgr.Get()
 
 	// Create connectors based on config
-	var metadata service.Metadata = duckdb.NewConnector()
+	md := duckdb.NewMetadata()
+	var metadata service.Metadata = md
 	var sqlConverter converter.SqlConverter = &converter.DuckDBSqlConverter{}
 
 	previewService := service.NewPreviewService(metadata, sqlConverter, configMgr)
@@ -32,7 +33,7 @@ func main() {
 	analysisHandler := server.NewAnalysisHandler()
 	analysisHandler.RegisterRoutes(srv.Router())
 
-	duckdbHandler := server.NewDuckDBHandler(metadata)
+	duckdbHandler := server.NewDuckDBHandler(md)
 	duckdbHandler.RegisterRoutes(srv.Router())
 
 	configHandler := server.NewConfigHandler(configMgr)
