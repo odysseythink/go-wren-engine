@@ -29,10 +29,15 @@ and listens on the same HTTP port (`8080`).
 
 | Gap | Impact | ETA |
 |---|---|---|
-| `etc/config.properties` is not parsed (env vars only) | Config file ignored | Phase 2 |
+| `etc/config.properties` parsed at startup | ✅ Phase 2 |
+| `PATCH /v1/config` persists to disk with archive | ✅ Phase 2 |
 | Postgres wire protocol (port 7432) not implemented | PG clients cannot connect | TBD |
-| `PATCH /v1/config` does not persist to disk | Restart loses config changes | Phase 2 |
 | Dynamic fields (`enable-dynamic-fields=true`) uses static branch | Possible semantic deviation | Phase 5 |
+
+> **Note on PATCH persistence:** Java `Properties.store()` overwrites the entire
+> file, discarding comments and custom headers. Go mirrors this behavior.
+> If you rely on comments in `config.properties`, manage the file with git
+> or an external templating tool.
 
 ## Makefile helpers
 
