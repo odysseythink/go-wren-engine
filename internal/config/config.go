@@ -157,7 +157,6 @@ func (cm *ConfigManager) Reset() {
 	cm.fileExtras = preserved
 	cm.filePath = filePath
 	cm.requiredReload = newCm.requiredReload
-	cm.reloadHooks = newCm.reloadHooks
 	cm.port = port
 }
 
