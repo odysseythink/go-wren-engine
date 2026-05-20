@@ -1,0 +1,40 @@
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+README.md
+
+# Design / planning artifacts
+.gpowers/
+
+# Test data
+testdata/
+
+# Build artifacts
+bin/
+*.exe
+
+# IDE / OS
+*.swp
+*.swo
+*.tmp
+.DS_Store
+.idea/
+.vscode/
+
+# Secrets
+.env
+.env.*
+*.env
+
+# CI / GitHub
+.github/
+
+# Development tools
+tools/
+
+# Docker itself
+docker-compose.yaml
+Dockerfile
