@@ -1,0 +1,13 @@
+{
+  "catalog": "wren",
+  "schema": "default",
+  "models": [
+    {
+      "name": "customer",
+      "refSql": "SELECT * FROM customer",
+      "columns": [
+        { "name": "custkey", "type": "INTEGER" }
+      ]
+    }
+  ]
+}
