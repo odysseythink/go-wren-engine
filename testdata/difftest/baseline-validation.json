@@ -1,0 +1,6 @@
+{
+  "validation/pass": "pass",
+  "validation/fail": "fail",
+  "validation/error_missing_model": "pass",
+  "validation/error_missing_column": "pass"
+}

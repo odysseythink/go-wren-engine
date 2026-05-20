@@ -1,0 +1,1 @@
+[{"name":"column_is_valid:orders:badcol","status":"FAIL","duration":"2.00ms","message":"java.sql.SQLException: Binder Error: Column \"badcol\" referenced that exists in the SELECT clause - but this column cannot be referenced before it is defined"}]
