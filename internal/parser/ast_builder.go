@@ -1026,6 +1026,16 @@ func (b *AstBuilder) VisitSubscript(ctx *generated.SubscriptContext) interface{}
 	}
 }
 
+// VisitArrayConstructor mirrors trino AstBuilder.visitArrayConstructor:
+// ARRAY[expr, expr, ...].
+func (b *AstBuilder) VisitArrayConstructor(ctx *generated.ArrayConstructorContext) interface{} {
+	ac := &ast.ArrayConstructor{}
+	for _, expr := range ctx.AllExpression() {
+		ac.Values = append(ac.Values, b.visitExpression(expr))
+	}
+	return ac
+}
+
 // VisitTypeConstructor mirrors trino AstBuilder.visitTypeConstructor: it builds
 // a GenericLiteral such as DATE '1995-01-01'. (DECIMAL keeps a dedicated path
 // in trino; the corpus parses decimals AS_DOUBLE, so DECIMAL is not produced.)

@@ -417,6 +417,25 @@ type SubscriptExpression struct {
 func (s *SubscriptExpression) GetChildren() []Node { return []Node{s.Base, s.Index} }
 func (s *SubscriptExpression) isExpression()       {}
 
+// ArrayConstructor represents the literal "ARRAY[v1, v2, ...]". The DEFAULT /
+// DUCKDB / POSTGRES dialects render it as "ARRAY[v1,v2,...]" (no spaces, comma-
+// joined). RewriteArray turns ArrayConstructor-as-subscript-base into
+// array_value(...) before DUCKDB rendering. Mirrors trino
+// io.trino.sql.tree.ArrayConstructor.
+type ArrayConstructor struct {
+	BaseNode
+	Values []Expression
+}
+
+func (a *ArrayConstructor) GetChildren() []Node {
+	out := make([]Node, len(a.Values))
+	for i, v := range a.Values {
+		out[i] = v
+	}
+	return out
+}
+func (a *ArrayConstructor) isExpression() {}
+
 // Row represents ROW(item, item, ...).
 type Row struct {
 	BaseNode

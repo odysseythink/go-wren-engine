@@ -124,6 +124,15 @@ func (e *exprFormatter) process(expr ast.Expression) string {
 		return "EXTRACT(" + n.Field + " FROM " + e.process(n.Expression) + ")"
 	case *ast.SubscriptExpression:
 		return e.process(n.Base) + "[" + e.process(n.Index) + "]"
+	case *ast.ArrayConstructor:
+		// Trino visitArrayConstructor: "ARRAY[" + Joiner.on(",").join(values) + "]".
+		// Note: comma WITHOUT space — verified at ../wren-engine-0.9.3/.../
+		// ExpressionFormatter.java visitArrayConstructor (~L265).
+		parts := make([]string, len(n.Values))
+		for i, v := range n.Values {
+			parts[i] = e.process(v)
+		}
+		return "ARRAY[" + strings.Join(parts, ",") + "]"
 	case *ast.Row:
 		return "ROW (" + e.joinExpressions(n.Items) + ")"
 	case *ast.AtTimeZone:
