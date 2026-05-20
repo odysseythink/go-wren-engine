@@ -15,8 +15,8 @@ type QueryAnalysisDto struct {
 }
 
 type ColumnAnalysisDto struct {
-	// Alias is *string + omitempty so nil → absent (matches Java Jackson
-	// class-level @JsonInclude(NON_NULL) skipping Optional.empty()).
+	// Alias is *string without omitempty so nil → "alias": null (matches Java
+	// Jackson which emits null for Optional.empty()). Do NOT add omitempty.
 	Alias *string `json:"alias"`
 	Expression string `json:"expression"`
 	// Properties is always emitted (Java emits {} for an empty Map; class-level

@@ -44,7 +44,7 @@ func jsonValueEqual(a, b any, path string, opts CompareOptions) error {
 		if !ok {
 			return fmt.Errorf("%s: type mismatch (number vs %T)", path, b)
 		}
-		if opts.LooseNodeLocation && strings.HasSuffix(path, ".line") || strings.HasSuffix(path, ".column") {
+		if opts.LooseNodeLocation && (strings.HasSuffix(path, ".line") || strings.HasSuffix(path, ".column")) {
 			if math.Abs(av-bv) <= 1 {
 				return nil
 			}
