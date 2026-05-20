@@ -143,7 +143,7 @@ func (v *Values) GetChildren() []Node {
 	}
 	return children
 }
-func (v *Values) isRelation() {}
+func (v *Values) isRelation()  {}
 func (v *Values) isQueryBody() {}
 func (v *Values) isStatement() {}
 

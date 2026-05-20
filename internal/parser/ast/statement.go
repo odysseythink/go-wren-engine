@@ -45,8 +45,8 @@ type QueryBody interface {
 // Union/Intersect/Except which all have relations []Relation and distinct bool.
 type SetOperation struct {
 	BaseNode
-	Operator string // "UNION" | "INTERSECT" | "EXCEPT"
-	Distinct bool
+	Operator  string // "UNION" | "INTERSECT" | "EXCEPT"
+	Distinct  bool
 	Relations []Relation
 }
 
@@ -98,7 +98,7 @@ func (qs *QuerySpecification) GetChildren() []Node {
 
 func (qs *QuerySpecification) isQueryBody() {}
 func (qs *QuerySpecification) isStatement() {}
-func (qs *QuerySpecification) isRelation() {}
+func (qs *QuerySpecification) isRelation()  {}
 
 // GroupBy represents a GROUP BY clause.
 type GroupBy struct {
