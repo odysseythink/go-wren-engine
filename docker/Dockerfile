@@ -17,7 +17,7 @@ RUN go mod download
 
 # Build the binary with CGo enabled (required for go-duckdb static lib)
 COPY . .
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
+RUN CGO_ENABLED=1 GOOS=linux \
     go build -ldflags='-s -w' -o wren-server ./cmd/wren-server
 
 # ── Runtime stage ───────────────────────────────────────────────
@@ -40,4 +40,5 @@ COPY --chmod=755 docker/entrypoint.sh ./
 # No USER directive — Java image runs as root
 
 # Pass-through heap args: $1=binary $2=maxHeap $3=minHeap
-CMD ["./entrypoint.sh", "wren-server", "512m", "64m"]
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["wren-server", "512m", "64m"]

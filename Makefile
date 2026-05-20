@@ -91,15 +91,15 @@ image-test: image
 		trap 'echo "==> Cleaning up..."; docker kill wren-engine-smoke >/dev/null 2>&1 || true; docker rm -f wren-engine-smoke >/dev/null 2>&1 || true' EXIT; \
 		echo "==> Waiting for service..."; \
 		for i in 1 2 3 4 5 6 7 8 9 10; do \
-			curl -sf http://localhost:8080/v1/config >/dev/null && break; \
+			curl -sf --max-time 5 http://localhost:8080/v1/config >/dev/null && break; \
 			sleep 1; \
 		done; \
-		curl -sf http://localhost:8080/v1/config >/dev/null || { echo "FAIL: /v1/config unreachable"; exit 1; }; \
+		curl -sf --max-time 5 http://localhost:8080/v1/config >/dev/null || { echo "FAIL: /v1/config unreachable"; exit 1; }; \
 		echo "PASS: /v1/config reachable"; \
-		count=$$(curl -sf http://localhost:8080/v1/config | grep -o '"name"' | wc -l | tr -d ' '); \
+		count=$$(curl -sf --max-time 5 http://localhost:8080/v1/config | grep -o '"name"' | wc -l | tr -d ' '); \
 		[ "$$count" -eq 11 ] || { echo "FAIL: expected 11 entries, got $$count"; exit 1; }; \
 		echo "PASS: 11 config entries"; \
-		type=$$(curl -sf http://localhost:8080/v1/config/wren.datasource.type | grep -o '"value":"[^"]*"' | cut -d'"' -f4); \
+		type=$$(curl -sf --max-time 5 http://localhost:8080/v1/config/wren.datasource.type | grep -o '"value":"[^"]*"' | cut -d'"' -f4); \
 		[ "$$type" = "DUCKDB" ] || { echo "FAIL: expected DUCKDB, got $$type"; exit 1; }; \
 		echo "PASS: datasource type is DUCKDB"; \
 		echo "==> Smoke test complete."; \
