@@ -53,7 +53,10 @@ func (s *PreviewService) Preview(ctx context.Context, wrenMDL *mdl.WrenMDL, sql 
 	if err != nil {
 		return nil, fmt.Errorf("rewrite failed: %w", err)
 	}
-	convertedSQL := s.sqlConverter.Convert(plannedSQL, analyzer.GetSessionContext(ctx))
+	convertedSQL, err := s.sqlConverter.Convert(plannedSQL, analyzer.GetSessionContext(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("dialect convert failed: %w", err)
+	}
 	// TODO: Execute query and return results
 	_ = convertedSQL
 	return &QueryResultDto{Columns: []connector.Column{}, Data: [][]any{}}, nil
@@ -80,6 +83,9 @@ func (s *PreviewService) DryRun(ctx context.Context, wrenMDL *mdl.WrenMDL, sql s
 	if err != nil {
 		return nil, err
 	}
-	convertedSQL := s.sqlConverter.Convert(plannedSQL, analyzer.GetSessionContext(ctx))
+	convertedSQL, err := s.sqlConverter.Convert(plannedSQL, analyzer.GetSessionContext(ctx))
+	if err != nil {
+		return nil, err
+	}
 	return s.metadata.DescribeQuery(ctx, convertedSQL, nil)
 }

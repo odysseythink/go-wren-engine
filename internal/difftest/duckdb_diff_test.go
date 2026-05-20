@@ -72,9 +72,11 @@ func goRewriteAndConvert(c Case) (sql, status, detail string) {
 	if err != nil {
 		return "", "go-error", err.Error()
 	}
-	// Signature adapts to current converter (task 5 upgrades to (string, error)).
 	conv := &converter.DuckDBSqlConverter{}
-	out := conv.Convert(planned, ctx)
+	out, err := conv.Convert(planned, ctx)
+	if err != nil {
+		return "", "go-error", err.Error()
+	}
 	return out, "", ""
 }
 
