@@ -36,55 +36,79 @@ func NewPreviewService(metadata Metadata, sqlConverter converter.SqlConverter, c
 	}
 }
 
-
-
 // Preview executes a preview query.
-func (s *PreviewService) Preview(ctx context.Context, wrenMDL *mdl.WrenMDL, sql string, limit int64) (*dto.PreviewResponse, error) {
+func (s *PreviewService) Preview(ctx context.Context, wrenMDL *mdl.WrenMDL, sqlText string, limit int64) (*dto.PreviewResponse, error) {
 	ctx = analyzer.WithSessionContext(ctx, &analyzer.SessionContext{
 		Catalog:             wrenMDL.Catalog(),
 		Schema:              wrenMDL.Schema(),
 		EnableDynamicFields: s.configMgr.Get().Wren.EnableDynamicFields,
 	})
 	analyzed := mdl.NewAnalyzedMDL(wrenMDL)
-	plannedSQL, err := rewrite.Rewrite(sql, analyzer.GetSessionContext(ctx), analyzed)
+	planned, err := rewrite.Rewrite(sqlText, analyzer.GetSessionContext(ctx), analyzed)
 	if err != nil {
 		return nil, fmt.Errorf("rewrite failed: %w", err)
 	}
-	convertedSQL, err := s.sqlConverter.Convert(plannedSQL, analyzer.GetSessionContext(ctx))
+	converted, err := s.sqlConverter.Convert(planned, analyzer.GetSessionContext(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dialect convert failed: %w", err)
 	}
-	// TODO: Execute query and return results
-	_ = convertedSQL
-	return &dto.PreviewResponse{Columns: []dto.PreviewColumn{}, Data: [][]any{}}, nil
+
+	it, err := s.metadata.DirectQuery(ctx, converted, nil)
+	if err != nil {
+		return nil, fmt.Errorf("execute failed: %w", err)
+	}
+	defer it.Close()
+
+	cols := it.Columns()
+	resp := &dto.PreviewResponse{
+		Columns: make([]dto.PreviewColumn, len(cols)),
+		Data:    make([][]any, 0, limit),
+	}
+	for i, c := range cols {
+		resp.Columns[i] = dto.PreviewColumn{Name: c.Name, Type: c.Type}
+	}
+	for it.Next() {
+		if int64(len(resp.Data)) >= limit {
+			break
+		}
+		resp.Data = append(resp.Data, it.Get())
+	}
+	return resp, nil
 }
 
 // DryPlan returns the rewritten SQL plan.
-func (s *PreviewService) DryPlan(ctx context.Context, wrenMDL *mdl.WrenMDL, sql string, modelingOnly bool) (string, error) {
+func (s *PreviewService) DryPlan(ctx context.Context, wrenMDL *mdl.WrenMDL, sqlText string, modelingOnly bool) (string, error) {
 	ctx = analyzer.WithSessionContext(ctx, &analyzer.SessionContext{
 		Catalog: wrenMDL.Catalog(),
 		Schema:  wrenMDL.Schema(),
 	})
 	analyzed := mdl.NewAnalyzedMDL(wrenMDL)
-	return rewrite.Rewrite(sql, analyzer.GetSessionContext(ctx), analyzed)
+	planned, err := rewrite.Rewrite(sqlText, analyzer.GetSessionContext(ctx), analyzed)
+	if err != nil {
+		return "", err
+	}
+	if modelingOnly {
+		return planned, nil
+	}
+	return s.sqlConverter.Convert(planned, analyzer.GetSessionContext(ctx))
 }
 
 // DryRun returns the column schema without executing.
-func (s *PreviewService) DryRun(ctx context.Context, wrenMDL *mdl.WrenMDL, sql string) ([]dto.PreviewColumn, error) {
+func (s *PreviewService) DryRun(ctx context.Context, wrenMDL *mdl.WrenMDL, sqlText string) ([]dto.PreviewColumn, error) {
 	ctx = analyzer.WithSessionContext(ctx, &analyzer.SessionContext{
 		Catalog: wrenMDL.Catalog(),
 		Schema:  wrenMDL.Schema(),
 	})
 	analyzed := mdl.NewAnalyzedMDL(wrenMDL)
-	plannedSQL, err := rewrite.Rewrite(sql, analyzer.GetSessionContext(ctx), analyzed)
+	planned, err := rewrite.Rewrite(sqlText, analyzer.GetSessionContext(ctx), analyzed)
 	if err != nil {
 		return nil, err
 	}
-	convertedSQL, err := s.sqlConverter.Convert(plannedSQL, analyzer.GetSessionContext(ctx))
+	converted, err := s.sqlConverter.Convert(planned, analyzer.GetSessionContext(ctx))
 	if err != nil {
 		return nil, err
 	}
-	cols, err := s.metadata.DescribeQuery(ctx, convertedSQL, nil)
+	cols, err := s.metadata.DescribeQuery(ctx, converted, nil)
 	if err != nil {
 		return nil, err
 	}
