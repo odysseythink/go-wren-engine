@@ -14,11 +14,3 @@ type GenerateViewRewrite struct{}
 func (r *GenerateViewRewrite) Apply(root ast.Statement, _ *base.SessionContext, _ *mdl.AnalyzedMDL) (ast.Statement, error) {
 	return root, nil
 }
-
-// EnumRewrite is a P3a pass-through stub for Java EnumRewrite.
-// Real implementation lands in P3c.
-type EnumRewrite struct{}
-
-func (r *EnumRewrite) Apply(root ast.Statement, _ *base.SessionContext, _ *mdl.AnalyzedMDL) (ast.Statement, error) {
-	return root, nil
-}
