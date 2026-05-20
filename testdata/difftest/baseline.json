@@ -39,14 +39,14 @@
     "tpch/met_rollup": "go-error",
     "tpch/met_weekly": "go-error",
     "tpch/v_enum": "pass",
-    "tpch/v_use_metric": "fail",
-    "tpch/v_use_model": "fail",
-    "tpch/v_use_nested": "fail",
-    "tpch/v_use_rollup": "fail",
+    "tpch/v_use_metric": "go-error",
+    "tpch/v_use_model": "go-error",
+    "tpch/v_use_nested": "go-error",
+    "tpch/v_use_rollup": "go-error",
     "viewenum/enum": "pass",
-    "viewenum/view_nested": "fail",
-    "viewenum/view_on_metric": "fail",
-    "viewenum/view_on_model": "fail",
-    "viewenum/view_rollup": "fail"
+    "viewenum/view_nested": "pass",
+    "viewenum/view_on_metric": "pass",
+    "viewenum/view_on_model": "pass",
+    "viewenum/view_rollup": "pass"
   }
 }
