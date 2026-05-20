@@ -2,6 +2,7 @@ package formatter
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -184,6 +185,9 @@ func formatStringLiteral(s string) string {
 // with one integer digit, up to 19 fractional digits, and a sign-on-negative
 // exponent with no leading zeros.
 func formatDouble(v float64, dialect Dialect) string {
+	if dialect == DialectDuckDB {
+		return formatDoubleDuckDB(v)
+	}
 	// strconv 'E' with precision -1 gives the shortest round-tripping mantissa
 	// (<=17 significant digits for float64, within DecimalFormat's 19-# limit).
 	// Go emits e.g. "6E-02" / "1E+02"; Java emits "6E-2" / "1E2": strip the
@@ -207,9 +211,69 @@ func formatDouble(v float64, dialect Dialect) string {
 	return mantissa + "E" + sign + exp
 }
 
+// formatDoubleDuckDB mirrors Java Double.toString:
+//   - finite |v| in [1e-3, 1e7): plain decimal "d.dddd"
+//   - else: scientific "d.dddE[-]exp" (mantissa always has at least one frac digit;
+//     exponent has no '+' and no leading zeros)
+//   - +0.0 → "0.0";  -0.0 → "-0.0"
+//   - Infinity / -Infinity / NaN → "Infinity" / "-Infinity" / "NaN"
+//     (matches java.lang.Double.toString, even though DuckDB rejects these literals)
+func formatDoubleDuckDB(v float64) string {
+	if math.IsNaN(v) {
+		return "NaN"
+	}
+	if math.IsInf(v, 1) {
+		return "Infinity"
+	}
+	if math.IsInf(v, -1) {
+		return "-Infinity"
+	}
+	abs := math.Abs(v)
+	if abs == 0 {
+		if math.Signbit(v) {
+			return "-0.0"
+		}
+		return "0.0"
+	}
+	if abs >= 1e-3 && abs < 1e7 {
+		// Plain decimal. strconv 'f' -1 gives shortest round-trip without
+		// scientific notation. Add trailing ".0" if integral.
+		s := strconv.FormatFloat(v, 'f', -1, 64)
+		if !strings.ContainsRune(s, '.') {
+			s += ".0"
+		}
+		return s
+	}
+	// Scientific. Go 'E' -1: "1.5E+10". Strip '+', strip leading zeros in exp,
+	// ensure mantissa has at least one fractional digit (Java forces "X.0").
+	s := strconv.FormatFloat(v, 'E', -1, 64)
+	mant, exp, _ := strings.Cut(s, "E")
+	if !strings.ContainsRune(mant, '.') {
+		mant += ".0"
+	}
+	sign := ""
+	if strings.HasPrefix(exp, "-") {
+		sign = "-"
+		exp = exp[1:]
+	} else if strings.HasPrefix(exp, "+") {
+		exp = exp[1:]
+	}
+	exp = strings.TrimLeft(exp, "0")
+	if exp == "" {
+		exp = "0"
+	}
+	return mant + "E" + sign + exp
+}
+
 // formatType renders a data type. Mirrors trino ExpressionFormatter
 // .visitGenericDataType: NAME optionally followed by (arg, arg, ...).
 func (e *exprFormatter) formatType(t *ast.DataType) string {
+	if e.dialect == DialectDuckDB && strings.EqualFold(t.Name, "ARRAY") && len(t.Parameters) == 1 {
+		// T[] suffix form. Single param is a TypeParameter wrapping the element type.
+		if tp, ok := t.Parameters[0].(*ast.TypeParameter); ok {
+			return e.formatType(&tp.Type) + "[]"
+		}
+	}
 	result := t.Name
 	if len(t.Parameters) == 0 {
 		return result
@@ -242,6 +306,9 @@ func (e *exprFormatter) formatBinary(op string, left, right ast.Expression) stri
 // formatFunctionCall mirrors trino ExpressionFormatter.visitFunctionCall for
 // the DEFAULT dialect (BigQuery/DuckDB special-casing is out of P2 scope).
 func (e *exprFormatter) formatFunctionCall(n *ast.FunctionCall) string {
+	if e.dialect == DialectDuckDB && strings.EqualFold(n.Name.Last(), "GENERATE_TIMESTAMP_ARRAY") {
+		panic("GENERATE_TIMESTAMP_ARRAY DuckDB special case not yet ported; not in P4 corpus")
+	}
 	arguments := e.joinExpressions(n.Arguments)
 	if len(n.Arguments) == 0 && strings.EqualFold(n.Name.Last(), "count") {
 		arguments = "*"
@@ -392,6 +459,14 @@ func (e *exprFormatter) formatSimpleCase(n *ast.SimpleCaseExpression) string {
 // formatInterval renders an interval literal. Mirrors trino
 // ExpressionFormatter.visitIntervalLiteral.
 func (e *exprFormatter) formatInterval(n *ast.IntervalLiteral) string {
+	if e.dialect == DialectDuckDB {
+		// "INTERVAL 'sign value' startField" — sign INSIDE the literal, no TO field.
+		sign := ""
+		if n.Sign == "-" {
+			sign = "-"
+		}
+		return "INTERVAL " + formatStringLiteral(sign+n.Value) + " " + strings.ToUpper(n.From)
+	}
 	result := "INTERVAL "
 	if n.Sign != "" {
 		result += n.Sign
