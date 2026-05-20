@@ -24,11 +24,11 @@ func TestDuckDB_DoubleLiteral(t *testing.T) {
 		// Java Double.toString boundaries: [1e-3, 1e7) is decimal; outside is scientific.
 		// Verified by running Java in ../wren-engine-0.9.3 REPL with String.valueOf.
 		{"SELECT 1.5", "SELECT 1.5\n\n"},
-		{"SELECT 0.001", "SELECT 0.001\n\n"},          // 1e-3 boundary inclusive → still decimal
-		{"SELECT 0.0001", "SELECT 1.0E-4\n\n"},        // < 1e-3 → scientific
-		{"SELECT 9999999.9", "SELECT 9999999.9\n\n"},   // < 1e7 → decimal
-		{"SELECT 1.0E10", "SELECT 1.0E10\n\n"},        // ≥ 1e7 → scientific
-		{"SELECT -2.5E-5", "SELECT -2.5E-5\n\n"},       // negative + scientific
+		{"SELECT 0.001", "SELECT 0.001\n\n"},         // 1e-3 boundary inclusive → still decimal
+		{"SELECT 0.0001", "SELECT 1.0E-4\n\n"},       // < 1e-3 → scientific
+		{"SELECT 9999999.9", "SELECT 9999999.9\n\n"}, // < 1e7 → decimal
+		{"SELECT 1.0E10", "SELECT 1.0E10\n\n"},       // ≥ 1e7 → scientific
+		{"SELECT -2.5E-5", "SELECT -2.5E-5\n\n"},     // negative + scientific
 	}
 	for _, c := range cases {
 		if got := roundtrip(t, c.in); got != c.want {

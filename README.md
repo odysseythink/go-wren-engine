@@ -27,3 +27,31 @@ CGO_ENABLED=1 go build ./...
 ```
 
 `CGO_ENABLED=0` 会跳过 DuckDB 连接器编译；P4 端点不可用。
+
+## P4 完成状态（执行层奇偶校验）
+
+- **DUCKDB 方言 SQL 字节差分**：`make duckdb-difftest` —— baseline 见
+  `testdata/difftest/baseline-duckdb.json`。
+- **响应信封 JSON 结构化差分**：`go test ./internal/difftest -run TestEnvelopeDifferential`
+  —— baseline 见 `testdata/difftest/baseline-envelope.json`。
+- **执行烟雾**：`cases/exec_smoke/` + `cases/viewenum/` 端到端对真实 in-memory
+  DuckDB 跑通 `service.PreviewService.Preview`。
+
+### 重抓 golden（需要 Java oracle）
+
+启动 Java oracle（`docker run -p 18080:8080 ghcr.io/canner/wren-engine:0.9.3`），
+然后：
+
+```bash
+make capture-golden            # default 方言 (P1/P2/P3 共用)
+make capture-duckdb-golden     # DUCKDB 方言 (P4)
+./tools/capture-envelope-golden.sh  # 信封 JSON (P4 envelope)
+```
+
+接受 baseline 当前结果：
+
+```bash
+make difftest-accept
+make duckdb-difftest-accept
+go test ./internal/difftest -run TestEnvelopeDifferential -difftest.accept-envelope
+```
