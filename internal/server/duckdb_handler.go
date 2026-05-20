@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/wren-engine/wren/internal/connector"
-	"github.com/wren-engine/wren/internal/service"
+	"github.com/wren-engine/wren/internal/dto"
 )
 
 // DuckDBHandler handles DuckDB data source endpoints.
@@ -42,12 +42,16 @@ func (h *DuckDBHandler) Query(w http.ResponseWriter, r *http.Request) {
 	defer result.Close()
 
 	cols := result.Columns()
+	pcols := make([]dto.PreviewColumn, len(cols))
+	for i, c := range cols {
+		pcols[i] = dto.PreviewColumn{Name: c.Name, Type: c.Type}
+	}
 	var data [][]any
 	for result.Next() {
 		data = append(data, result.Get())
 	}
-	json.NewEncoder(w).Encode(service.QueryResultDto{
-		Columns: cols,
+	json.NewEncoder(w).Encode(dto.PreviewResponse{
+		Columns: pcols,
 		Data:    data,
 	})
 }

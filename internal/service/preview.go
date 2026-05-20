@@ -8,6 +8,7 @@ import (
 	"github.com/wren-engine/wren/internal/config"
 	"github.com/wren-engine/wren/internal/connector"
 	"github.com/wren-engine/wren/internal/converter"
+	"github.com/wren-engine/wren/internal/dto"
 	"github.com/wren-engine/wren/internal/mdl"
 	"github.com/wren-engine/wren/internal/rewrite"
 )
@@ -35,14 +36,10 @@ func NewPreviewService(metadata Metadata, sqlConverter converter.SqlConverter, c
 	}
 }
 
-// QueryResultDto represents query results.
-type QueryResultDto struct {
-	Columns []connector.Column `json:"columns"`
-	Data    [][]any            `json:"data"`
-}
+
 
 // Preview executes a preview query.
-func (s *PreviewService) Preview(ctx context.Context, wrenMDL *mdl.WrenMDL, sql string, limit int64) (*QueryResultDto, error) {
+func (s *PreviewService) Preview(ctx context.Context, wrenMDL *mdl.WrenMDL, sql string, limit int64) (*dto.PreviewResponse, error) {
 	ctx = analyzer.WithSessionContext(ctx, &analyzer.SessionContext{
 		Catalog:             wrenMDL.Catalog(),
 		Schema:              wrenMDL.Schema(),
@@ -59,7 +56,7 @@ func (s *PreviewService) Preview(ctx context.Context, wrenMDL *mdl.WrenMDL, sql 
 	}
 	// TODO: Execute query and return results
 	_ = convertedSQL
-	return &QueryResultDto{Columns: []connector.Column{}, Data: [][]any{}}, nil
+	return &dto.PreviewResponse{Columns: []dto.PreviewColumn{}, Data: [][]any{}}, nil
 }
 
 // DryPlan returns the rewritten SQL plan.
@@ -73,7 +70,7 @@ func (s *PreviewService) DryPlan(ctx context.Context, wrenMDL *mdl.WrenMDL, sql 
 }
 
 // DryRun returns the column schema without executing.
-func (s *PreviewService) DryRun(ctx context.Context, wrenMDL *mdl.WrenMDL, sql string) ([]connector.Column, error) {
+func (s *PreviewService) DryRun(ctx context.Context, wrenMDL *mdl.WrenMDL, sql string) ([]dto.PreviewColumn, error) {
 	ctx = analyzer.WithSessionContext(ctx, &analyzer.SessionContext{
 		Catalog: wrenMDL.Catalog(),
 		Schema:  wrenMDL.Schema(),
@@ -87,5 +84,13 @@ func (s *PreviewService) DryRun(ctx context.Context, wrenMDL *mdl.WrenMDL, sql s
 	if err != nil {
 		return nil, err
 	}
-	return s.metadata.DescribeQuery(ctx, convertedSQL, nil)
+	cols, err := s.metadata.DescribeQuery(ctx, convertedSQL, nil)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]dto.PreviewColumn, len(cols))
+	for i, c := range cols {
+		out[i] = dto.PreviewColumn{Name: c.Name, Type: c.Type}
+	}
+	return out, nil
 }
