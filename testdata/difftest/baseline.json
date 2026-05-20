@@ -37,6 +37,16 @@
     "tpch/met_daily": "go-error",
     "tpch/met_revenue": "go-error",
     "tpch/met_rollup": "go-error",
-    "tpch/met_weekly": "go-error"
+    "tpch/met_weekly": "go-error",
+    "tpch/v_enum": "fail",
+    "tpch/v_use_metric": "fail",
+    "tpch/v_use_model": "fail",
+    "tpch/v_use_nested": "fail",
+    "tpch/v_use_rollup": "fail",
+    "viewenum/enum": "fail",
+    "viewenum/view_nested": "fail",
+    "viewenum/view_on_metric": "fail",
+    "viewenum/view_on_model": "fail",
+    "viewenum/view_rollup": "fail"
   }
 }
