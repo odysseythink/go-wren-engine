@@ -33,6 +33,9 @@
   已知 `go-error`（待 P6 Jinja 宏层）。
 - `metric/` —— P3b 合成度量语料组（无 Jinja 小 MDL），含 metric-on-model /
   metric-on-metric / cumulative metric / rollup，为 P3b 端到端字节奇偶证据。
+- `viewenum/` —— P3c 合成视图/枚举语料组（无 Jinja 小 MDL），含 view-on-model /
+  view-on-metric / view-rollup / view-nested / enum，为 P3c 端到端字节奇偶证据。
+  全部 5 条 `pass`。
 
 ## 失败分类
 
@@ -41,3 +44,15 @@
 - `go-error` —— Go 改写返回错误或 panic。
 - `oracle-error` —— Java 引擎对该用例本身报错，已排除出比对。
 - `no-golden` —— 缺 golden 文件，需运行 `make capture-golden`。
+
+## P3 状态小结
+
+P3 重写引擎奇偶校验（非动态字段路径）已达成：
+
+- 22 条 TPC-H 标准查询：20 `pass` + 2 `oracle-error`（`tpch/1`/`tpch/4`）。
+- P3a `tpch/m_*`：5 `pass` + 1 `go-error`（`m_orders` 传递性 Jinja）。
+- P3b `metric/*`：4 `pass`；`tpch/met_*`：5 `go-error`（传递性 Jinja）。
+- P3c `viewenum/*`：5 `pass`；`tpch/v_enum`：1 `pass`；`tpch/v_use_*`：4 `go-error`（传递性 Jinja）。
+
+`tpch/v_use_*` 与 `tpch/met_*`/`tpch/m_orders` 同属传递性依赖含 Jinja 列的 `Customer`
+模型，在 P3 阶段为已知失败，待 P6 的 Jinja 宏层。
