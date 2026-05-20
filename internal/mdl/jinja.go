@@ -1,17 +1,20 @@
 package mdl
 
 import (
-	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/wren-engine/wren/internal/dto"
 )
 
-// RenderJinja processes Jinja templates in column expressions.
-// TODO: Replace with full gonja implementation when available.
+// RenderJinja substitutes macro references in column expressions.
+// Best-effort positional-argument substitution; full Jinjava parity is deferred
+// to P7 (default-config MDLs contain no macros, so this is gap-with-acceptance).
 func RenderJinja(manifest *dto.Manifest) *dto.Manifest {
-	// Minimal implementation: replace macro calls with their bodies
-	macros := make(map[string]*dto.Macro)
+	if manifest == nil || len(manifest.Macros) == 0 {
+		return manifest // risk #16 — nil-safe fast path
+	}
+	macros := make(map[string]*dto.Macro, len(manifest.Macros))
 	for i := range manifest.Macros {
 		macros[manifest.Macros[i].Name] = &manifest.Macros[i]
 	}
@@ -24,16 +27,42 @@ func RenderJinja(manifest *dto.Manifest) *dto.Manifest {
 			}
 		}
 	}
-
 	return manifest
 }
 
+// macroCallRegex matches {{ macro_name }} or {{ macro_name(arg, arg) }} with optional whitespace.
+var macroCallRegex = regexp.MustCompile(`\{\{\s*([A-Za-z_]\w*)\s*(?:\(([^)]*)\))?\s*\}\}`)
+
 func expandMacros(expression string, macros map[string]*dto.Macro) string {
-	for name, macro := range macros {
-		// Simple substitution: {{ macro_name(args) }} -> body
-		// This is a very basic placeholder implementation.
-		placeholder := fmt.Sprintf("{{%s}}", name)
-		expression = strings.ReplaceAll(expression, placeholder, macro.GetBody())
+	return macroCallRegex.ReplaceAllStringFunc(expression, func(match string) string {
+		groups := macroCallRegex.FindStringSubmatch(match)
+		if groups == nil {
+			return match
+		}
+		macroName := groups[1]
+		argStr := groups[2]
+
+		macro, ok := macros[macroName]
+		if !ok {
+			return match // unknown macro left as-is (Java parity for unmatched tags)
+		}
+
+		body := macro.GetBody()
+		paramNames := macro.GetParameters()
+		args := parseArgs(argStr)
+
+		for i, name := range paramNames {
+			if i < len(args) {
+				body = strings.ReplaceAll(body, name, strings.TrimSpace(args[i]))
+			}
+		}
+		return body
+	})
+}
+
+func parseArgs(argStr string) []string {
+	if strings.TrimSpace(argStr) == "" {
+		return nil
 	}
-	return expression
+	return strings.Split(argStr, ",")
 }
