@@ -767,13 +767,15 @@ func (b *AstBuilder) VisitDigitIdentifier(ctx *generated.DigitIdentifierContext)
 
 func (b *AstBuilder) VisitQualifiedName(ctx *generated.QualifiedNameContext) interface{} {
 	var parts []string
+	var originalParts []ast.Identifier
 	for _, id := range ctx.AllIdentifier() {
 		ident := b.visitIdentifier(id)
 		if ident != nil {
 			parts = append(parts, ident.Value)
+			originalParts = append(originalParts, *ident)
 		}
 	}
-	return ast.QualifiedNameOf(parts...)
+	return ast.QualifiedName{Parts: parts, OriginalParts: originalParts}
 }
 
 // --------------------------------------------------------------------------

@@ -52,21 +52,21 @@ type Relationable interface {
 func (t TimeUnit) IntervalExpression() string {
 	switch t {
 	case TimeUnitYear:
-		return "INTERVAL '1 YEAR'"
+		return "INTERVAL '1' YEAR"
 	case TimeUnitQuarter:
-		return "INTERVAL '3 MONTH'"
+		return "INTERVAL '3' MONTH"
 	case TimeUnitMonth:
-		return "INTERVAL '1 MONTH'"
+		return "INTERVAL '1' MONTH"
 	case TimeUnitWeek:
-		return "INTERVAL '7 DAY'"
+		return "INTERVAL '7' DAY"
 	case TimeUnitDay:
-		return "INTERVAL '1 DAY'"
+		return "INTERVAL '1' DAY"
 	case TimeUnitHour:
-		return "INTERVAL '1 HOUR'"
+		return "INTERVAL '1' HOUR"
 	case TimeUnitMinute:
-		return "INTERVAL '1 MINUTE'"
+		return "INTERVAL '1' MINUTE"
 	case TimeUnitSecond:
-		return "INTERVAL '1 SECOND'"
+		return "INTERVAL '1' SECOND"
 	default:
 		return ""
 	}
