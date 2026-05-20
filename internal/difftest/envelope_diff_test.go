@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/wren-engine/wren/internal/config"
@@ -33,6 +34,9 @@ var (
 func runEnvelopeCase(t *testing.T, c Case) (status, detail string) {
 	t.Helper()
 	goldenBase := filepath.Join(envelopeDir, c.Group, c.Name+".json")
+	if _, err := os.Stat(goldenBase + ".error.permanent"); err == nil {
+		return "oracle-error-permanent", "Java preview errored permanently"
+	}
 	if _, err := os.Stat(goldenBase + ".error"); err == nil {
 		return "oracle-error", "Java preview errored"
 	}
@@ -138,10 +142,13 @@ func TestEnvelopeDifferential(t *testing.T) {
 		switch {
 		case w == "pass" && st != "pass":
 			t.Errorf("ENVELOPE REGRESSION %s: baseline=pass, now=%s", id, st)
-		case w != "pass" && st == "pass":
+		case w == "oracle-error-permanent" && st == "pass":
+			t.Errorf("ENVELOPE %s now passes (was oracle-error-permanent) — run `make envelope-difftest-accept`", id)
+		case w != "pass" && w != "oracle-error-permanent" && st == "pass":
 			t.Errorf("ENVELOPE IMPROVEMENT %s now passes — run `make envelope-difftest-accept`", id)
 		}
 	}
+	t.Logf("\n%s", envelopeSummary(results))
 }
 
 func readEnvelopeBaseline(t *testing.T) baselineFile {
@@ -156,6 +163,24 @@ func readEnvelopeBaseline(t *testing.T) baselineFile {
 		b.Cases = map[string]string{}
 	}
 	return b
+}
+
+func envelopeSummary(results map[string]string) string {
+	counts := map[string]int{}
+	for _, s := range results {
+		counts[s]++
+	}
+	keys := make([]string, 0, len(counts))
+	for k := range counts {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	denominator := len(results) - counts["oracle-error-permanent"]
+	s := fmt.Sprintf("Envelope 差分计分板: %d/%d 通过", counts["pass"], denominator)
+	for _, k := range keys {
+		s += fmt.Sprintf("\n  %-24s %d", k, counts[k])
+	}
+	return s
 }
 
 func writeEnvelopeBaseline(t *testing.T, results map[string]string) {

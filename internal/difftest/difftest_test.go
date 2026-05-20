@@ -32,9 +32,12 @@ type baselineFile struct {
 
 // runCase rewrites one case with the Go engine and compares it to the frozen
 // Java golden. It returns one of: pass, fail, parser-gap, go-error,
-// oracle-error, no-golden.
+// oracle-error, oracle-error-permanent, no-golden.
 func runCase(c Case) (status string, detail string) {
 	goldenBase := filepath.Join(goldenDir, c.Group, c.Name+".sql")
+	if _, err := os.Stat(goldenBase + ".error.permanent"); err == nil {
+		return "oracle-error-permanent", "Java engine returned a permanent error for this case (known Java bug)"
+	}
 	if _, err := os.Stat(goldenBase + ".error"); err == nil {
 		return "oracle-error", "Java engine returned an error for this case"
 	}
@@ -127,7 +130,10 @@ func TestDifferential(t *testing.T) {
 		case want == "pass" && status != "pass":
 			regressions++
 			t.Errorf("REGRESSION %s: baseline=pass, now=%s", id, status)
-		case want != "pass" && status == "pass":
+		case want == "oracle-error-permanent" && status == "pass":
+			improvements++
+			t.Errorf("%s now passes (was oracle-error-permanent) — run `make difftest-accept`", id)
+		case want != "pass" && want != "oracle-error-permanent" && status == "pass":
 			improvements++
 			t.Errorf("%s now passes — run `make difftest-accept` to update baseline", id)
 		}
@@ -149,9 +155,10 @@ func summary(results map[string]string) string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	s := fmt.Sprintf("差分计分板: %d/%d 通过", counts["pass"], len(results))
+	denominator := len(results) - counts["oracle-error-permanent"]
+	s := fmt.Sprintf("差分计分板: %d/%d 通过", counts["pass"], denominator)
 	for _, k := range keys {
-		s += fmt.Sprintf("\n  %-12s %d", k, counts[k])
+		s += fmt.Sprintf("\n  %-24s %d", k, counts[k])
 	}
 	return s
 }

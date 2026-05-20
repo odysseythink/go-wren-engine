@@ -28,6 +28,9 @@ const (
 // runDuckdbCase rewrites + converts one case and compares to the duckdb golden.
 func runDuckdbCase(c Case) (status, detail string) {
 	goldenBase := filepath.Join(goldenDuckdbDir, c.Group, c.Name+".sql")
+	if _, err := os.Stat(goldenBase + ".error.permanent"); err == nil {
+		return "oracle-error-permanent", "Java engine returned a permanent error (DuckDB mode)"
+	}
 	if _, err := os.Stat(goldenBase + ".error"); err == nil {
 		return "oracle-error", "Java engine returned an error for this case (DuckDB mode)"
 	}
@@ -109,7 +112,10 @@ func TestDifferentialDuckDB(t *testing.T) {
 		case w == "pass" && st != "pass":
 			regr++
 			t.Errorf("REGRESSION %s: baseline=pass, now=%s", id, st)
-		case w != "pass" && st == "pass":
+		case w == "oracle-error-permanent" && st == "pass":
+			impr++
+			t.Errorf("%s now passes (was oracle-error-permanent) — run `make duckdb-difftest-accept`", id)
+		case w != "pass" && w != "oracle-error-permanent" && st == "pass":
 			impr++
 			t.Errorf("%s now passes — run `make duckdb-difftest-accept` to update", id)
 		}
@@ -130,9 +136,10 @@ func duckdbSummary(results map[string]string) string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	s := fmt.Sprintf("DUCKDB 方言差分计分板: %d/%d 通过", counts["pass"], len(results))
+	denominator := len(results) - counts["oracle-error-permanent"]
+	s := fmt.Sprintf("DUCKDB 方言差分计分板: %d/%d 通过", counts["pass"], denominator)
 	for _, k := range keys {
-		s += fmt.Sprintf("\n  %-12s %d", k, counts[k])
+		s += fmt.Sprintf("\n  %-24s %d", k, counts[k])
 	}
 	return s
 }
