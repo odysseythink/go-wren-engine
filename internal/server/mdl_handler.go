@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 
@@ -125,8 +126,26 @@ func (h *MDLHandler) DryPlanV2(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: err.Error()})
 		return
 	}
-	// TODO: Decode base64 manifest
-	_ = req
+	if req.ManifestStr == "" {
+		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: "Manifest is required"})
+		return
+	}
+	manifestJSON, err := base64.StdEncoding.DecodeString(req.ManifestStr)
+	if err != nil {
+		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: "base64 decode: " + err.Error()})
+		return
+	}
+	wrenMDL, err := mdl.WrenMDLFromJSON(string(manifestJSON))
+	if err != nil {
+		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: err.Error()})
+		return
+	}
+	// V2 dry-plan: Java forces modelingOnly=true regardless of request (see MDLResourceV2.dryPlan).
+	result, err := h.previewService.DryPlan(r.Context(), wrenMDL, req.SQL, true)
+	if err != nil {
+		WriteError(w, &WrenError{Code: 65536, Type: GenericUserError, Message: err.Error()})
+		return
+	}
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("-- dry plan v2 --"))
+	w.Write([]byte(result))
 }
