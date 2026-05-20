@@ -7,15 +7,16 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf16"
 )
 
 // parseProperties parses a Java-compatible .properties file.
 // Rules mirrored from java.util.Properties.load(InputStream):
-//   • Comments: lines beginning with # or ! (leading whitespace OK)
-//   • Empty lines ignored
-//   • Separators: =, :, or arbitrary whitespace
-//   • Line continuation: trailing unescaped \ before newline
-//   • Escapes: \n \r \t \\ \= \: \# \! \ (space) \uXXXX
+//   - Comments: lines beginning with # or ! (leading whitespace OK)
+//   - Empty lines ignored
+//   - Separators: =, :, or arbitrary whitespace
+//   - Line continuation: trailing unescaped \ before newline
+//   - Escapes: \n \r \t \\ \= \: \# \! \ (space) \uXXXX
 func parseProperties(r io.Reader) (map[string]string, error) {
 	result := make(map[string]string)
 	reader := bufio.NewReader(r)
@@ -67,9 +68,7 @@ func parseProperties(r io.Reader) (map[string]string, error) {
 		}
 
 		buf.WriteString(line)
-		if err := processLogicalLine(buf.String(), result); err != nil {
-			return nil, err
-		}
+		processLogicalLine(buf.String(), result)
 		buf.Reset()
 
 		if isEOF {
@@ -78,25 +77,23 @@ func parseProperties(r io.Reader) (map[string]string, error) {
 	}
 
 	if buf.Len() > 0 {
-		if err := processLogicalLine(buf.String(), result); err != nil {
-			return nil, err
-		}
+		processLogicalLine(buf.String(), result)
 	}
 
 	return result, nil
 }
 
-func processLogicalLine(line string, result map[string]string) error {
+func processLogicalLine(line string, result map[string]string) {
 	i := 0
 	for i < len(line) && isPropsSpace(line[i]) {
 		i++
 	}
 	if i >= len(line) {
-		return nil
+		return
 	}
 	c := line[i]
 	if c == '#' || c == '!' {
-		return nil
+		return
 	}
 
 	// Locate end of key, respecting escapes
@@ -139,7 +136,6 @@ func processLogicalLine(line string, result map[string]string) error {
 	key := unescapeProps(rawKey)
 	value := unescapeProps(rawValue)
 	result[key] = value
-	return nil
 }
 
 func isPropsSpace(b byte) bool {
@@ -181,17 +177,30 @@ func unescapeProps(s string) string {
 			case ' ':
 				b.WriteByte(' ')
 				i++
+			case 'f':
+				b.WriteByte('\f')
+				i++
 			case 'u':
 				if i+5 < len(s) {
 					hex := s[i+2 : i+6]
 					if val, err := strconv.ParseUint(hex, 16, 16); err == nil {
+						// Handle UTF-16 surrogate pairs
+						if val >= 0xD800 && val <= 0xDBFF && i+11 < len(s) && s[i+6] == '\\' && s[i+7] == 'u' {
+							hex2 := s[i+8 : i+12]
+							if val2, err := strconv.ParseUint(hex2, 16, 16); err == nil && val2 >= 0xDC00 && val2 <= 0xDFFF {
+								r := utf16.DecodeRune(rune(val), rune(val2))
+								b.WriteRune(r)
+								i += 11
+								continue
+							}
+						}
 						b.WriteRune(rune(val))
 						i += 5
 						continue
 					}
 				}
-				// Malformed unicode escape – treat 'u' literally
-				b.WriteByte('u')
+				// Malformed unicode escape – treat '\u' literally
+				b.WriteString("\\u")
 				i++
 			default:
 				b.WriteByte(next)
@@ -235,7 +244,12 @@ func escapeProps(s string, isKey bool) string {
 			b.WriteByte(' ')
 		default:
 			if r < ' ' || r > '~' {
-				b.WriteString(fmt.Sprintf("\\u%04x", r))
+				if r > 0xFFFF {
+					r1, r2 := utf16.EncodeRune(r)
+					b.WriteString(fmt.Sprintf("\\u%04x\\u%04x", r1, r2))
+				} else {
+					b.WriteString(fmt.Sprintf("\\u%04x", r))
+				}
 			} else {
 				b.WriteRune(r)
 			}
@@ -246,9 +260,9 @@ func escapeProps(s string, isKey bool) string {
 }
 
 // writePropertiesWithTimestamp writes a properties map in Java Properties.store() format.
-//   • First line:  #<header>
-//   • Second line: #<RFC1123-ish timestamp>
-//   • Remaining:   keys in alphabetic order, values escaped
+//   - First line:  #<header>
+//   - Second line: #<RFC1123-ish timestamp>
+//   - Remaining:   keys in alphabetic order, values escaped
 func writePropertiesWithTimestamp(w io.Writer, props map[string]string, header, timestamp string) error {
 	bw := bufio.NewWriter(w)
 	if _, err := bw.WriteString("#" + header + "\n"); err != nil {

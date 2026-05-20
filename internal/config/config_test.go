@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLoadFromFile_OverridesDefaults(t *testing.T) {
@@ -148,6 +149,7 @@ func TestArchive_MultipleCallsMonotonic(t *testing.T) {
 	if err := cm.Archive(); err != nil {
 		t.Fatalf("Archive 1: %v", err)
 	}
+	time.Sleep(2 * time.Millisecond)
 	if err := cm.Archive(); err != nil {
 		t.Fatalf("Archive 2: %v", err)
 	}

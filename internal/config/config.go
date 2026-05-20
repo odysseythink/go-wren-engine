@@ -47,7 +47,7 @@ type ConfigManager struct {
 	port           int               // bootstrap-only, never in /v1/config
 	configs        map[string]string // mirrors Java configs map (11 typed keys)
 	static         map[string]bool   // mirrors Java staticConfigs set
-	fileExtras     map[string]string // non-11 keys from file + overrides (persisted)
+	fileExtras     map[string]string // all keys from file (11-key + non-11-key) for transparent write-back
 	filePath       string            // path to config.properties
 	requiredReload map[string]bool   // keys whose change triggers reload
 	reloadHooks    map[string][]func()
@@ -143,20 +143,22 @@ func (cm *ConfigManager) Reset() {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	port := cm.port
-	// Preserve non-11-key extras
 	preserved := make(map[string]string)
 	for k, v := range cm.fileExtras {
 		if !knownKeys[k] {
 			preserved[k] = v
 		}
 	}
-	mu := cm.mu       // preserve locked mutex across value replacement
-	path := cm.filePath // preserve file path
-	*cm = *NewConfigManager()
-	cm.mu = mu
-	cm.port = port
-	cm.filePath = path
+	filePath := cm.filePath
+	newCm := NewConfigManager()
+	cm.port = newCm.port
+	cm.configs = newCm.configs
+	cm.static = newCm.static
 	cm.fileExtras = preserved
+	cm.filePath = filePath
+	cm.requiredReload = newCm.requiredReload
+	cm.reloadHooks = newCm.reloadHooks
+	cm.port = port
 }
 
 // ErrUnknownConfigKey is returned by Set when the key isn't a recognised Java key.

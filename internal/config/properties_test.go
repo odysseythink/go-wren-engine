@@ -218,6 +218,48 @@ func TestWritePropertiesRoundTrip(t *testing.T) {
 	}
 }
 
+func TestParsePropertiesFormFeedEscape(t *testing.T) {
+	input := `key=hello\fworld`
+	props, err := parseProperties(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	expected := "hello\fworld"
+	if props["key"] != expected {
+		t.Errorf("expected %q, got %q", expected, props["key"])
+	}
+}
+
+func TestParsePropertiesMalformedUnicode(t *testing.T) {
+	input := `key=abc\uXYZ\u`
+	props, err := parseProperties(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	expected := "abc\\uXYZ\\u"
+	if props["key"] != expected {
+		t.Errorf("expected %q, got %q", expected, props["key"])
+	}
+}
+
+func TestWritePropertiesNonBMPEscape(t *testing.T) {
+	original := map[string]string{
+		"emoji": "💩",
+	}
+	var buf bytes.Buffer
+	err := writePropertiesWithTimestamp(&buf, original, "header", "timestamp")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	parsed, err := parseProperties(&buf)
+	if err != nil {
+		t.Fatalf("unexpected error parsing: %v", err)
+	}
+	if parsed["emoji"] != "💩" {
+		t.Errorf("expected emoji=💩, got %q", parsed["emoji"])
+	}
+}
+
 func TestWritePropertiesSortOrder(t *testing.T) {
 	props := map[string]string{
 		"zebra": "1",
