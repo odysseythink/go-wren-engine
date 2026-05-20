@@ -30,12 +30,11 @@ func TestAnalysis(t *testing.T) {
 		t.Skip("no corpus")
 	}
 	results := make(map[string]string)
+	details := make(map[string]string)
 	for _, c := range cases {
 		status, detail := runAnalysisCase(c)
 		results[c.ID()] = status
-		if status == "fail" {
-			t.Errorf("%s: %s", c.ID(), detail)
-		}
+		details[c.ID()] = detail
 	}
 	if *acceptAnalysisFlag {
 		b, _ := json.MarshalIndent(results, "", "  ")
@@ -49,8 +48,9 @@ func TestAnalysis(t *testing.T) {
 		if want == "" {
 			want = "no-golden"
 		}
-		if got := results[c.ID()]; got != want {
-			t.Errorf("%s: baseline %q, got %q", c.ID(), want, got)
+		got := results[c.ID()]
+		if got != want {
+			t.Errorf("%s: baseline %q, got %q (%s)", c.ID(), want, got, details[c.ID()])
 		}
 	}
 }

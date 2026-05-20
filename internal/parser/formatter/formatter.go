@@ -328,9 +328,9 @@ func (f *formatter) visitQuerySpecification(n *ast.QuerySpecification, indent in
 		f.builder.WriteString("\n")
 	}
 
-	f.appendOrderBy(n.OrderBy, indent)
-	f.appendOffset(n.Offset, indent)
-	f.appendLimit(n.Limit, indent)
+	// OrderBy/Offset/Limit are emitted by visitQuery, not here.
+	// Go's AstBuilder puts them on Query; we only propagate to
+	// QuerySpecification for DecisionPointAnalyzer consumption.
 }
 
 // appendOrderBy emits an ORDER BY line when items is non-empty. Mirrors trino
