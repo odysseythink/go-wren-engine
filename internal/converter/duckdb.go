@@ -26,7 +26,7 @@ func (c *DuckDBSqlConverter) Convert(sqlText string, _ *analyzer.SessionContext)
 	}
 	rules := []duckdbRule{
 		RewriteArray{},
-		// RewriteFunction added in task 6.
+		RewriteFunction{},
 	}
 	for _, r := range rules {
 		stmt = r.Apply(stmt)
