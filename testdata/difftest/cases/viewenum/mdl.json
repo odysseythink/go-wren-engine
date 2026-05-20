@@ -1,0 +1,39 @@
+{
+  "catalog": "wren",
+  "schema": "test",
+  "models": [
+    {
+      "name": "Orders",
+      "refSql": "select * from orders",
+      "primaryKey": "orderkey",
+      "columns": [
+        {"name": "orderkey", "type": "int4", "expression": "o_orderkey"},
+        {"name": "custkey", "type": "int4", "expression": "o_custkey"},
+        {"name": "totalprice", "type": "float8", "expression": "o_totalprice"},
+        {"name": "orderdate", "type": "date", "expression": "o_orderdate"},
+        {"name": "orderstatus", "type": "varchar", "expression": "o_orderstatus"}
+      ]
+    }
+  ],
+  "relationships": [],
+  "metrics": [
+    {
+      "name": "Revenue",
+      "baseObject": "Orders",
+      "dimension": [{"name": "custkey", "type": "int4", "expression": "custkey"}],
+      "measure": [{"name": "totalprice", "type": "int4", "expression": "sum(totalprice)"}],
+      "timeGrain": [{"name": "orderdate", "refColumn": "orderdate", "dateParts": ["YEAR", "MONTH"]}]
+    }
+  ],
+  "cumulativeMetrics": [],
+  "enumDefinitions": [
+    {"name": "Status", "values": [{"name": "F"}, {"name": "O"}, {"name": "P"}]}
+  ],
+  "views": [
+    {"name": "useModel", "statement": "select * from Orders"},
+    {"name": "useMetric", "statement": "select * from Revenue"},
+    {"name": "useMetricRollUp", "statement": "select * from roll_up(Revenue, orderdate, YEAR)"},
+    {"name": "useUseMetric", "statement": "select * from useMetric"}
+  ],
+  "macros": []
+}
