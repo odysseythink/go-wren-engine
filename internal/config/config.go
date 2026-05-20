@@ -35,9 +35,9 @@ func NewConfigManager() *ConfigManager {
 		static:  map[string]bool{},
 	}
 	// initConfig(key, value, requiredReload, isStatic) — mirror Java's table.
-	cm.initConfig("wren.directory", "etc/mdl", false, true)
+	cm.initConfig("wren.directory", "/usr/src/app/etc/mdl", false, true)
 	cm.initConfig("wren.datasource.type", "DUCKDB", true, false)
-	cm.initConfig("wren.experimental-enable-dynamic-fields", "true", false, false)
+	cm.initConfig("wren.experimental-enable-dynamic-fields", "false", false, false)
 	cm.initConfig("duckdb.memory-limit", "268435456B", true, false)
 	cm.initConfig("duckdb.home-directory", "", true, false)
 	cm.initConfig("duckdb.temp-directory", "/tmp/duck", true, false)

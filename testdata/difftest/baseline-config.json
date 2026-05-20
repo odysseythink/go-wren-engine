@@ -1,0 +1,14 @@
+{
+  "config/all": "pass",
+  "config/duckdb.cache-task-retry-delay": "pass",
+  "config/duckdb.connector.init-sql-path": "pass",
+  "config/duckdb.connector.session-sql-path": "pass",
+  "config/duckdb.home-directory": "pass",
+  "config/duckdb.max-cache-query-timeout": "pass",
+  "config/duckdb.max-concurrent-tasks": "pass",
+  "config/duckdb.memory-limit": "pass",
+  "config/duckdb.temp-directory": "pass",
+  "config/wren.datasource.type": "pass",
+  "config/wren.directory": "pass",
+  "config/wren.experimental-enable-dynamic-fields": "pass"
+}
