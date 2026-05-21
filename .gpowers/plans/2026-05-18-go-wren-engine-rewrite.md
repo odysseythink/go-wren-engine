@@ -18,7 +18,7 @@
 
 **Files:**
 - Create: `go.mod`
-- Create: `cmd/wren-server/main.go`
+- Create: `cmd/wren-engine/main.go`
 - Create: `Makefile`
 
 - [ ] **Step 1: Initialize Go module and create project structure**
@@ -26,12 +26,12 @@
 ```bash
 cd D:\workspace\kb_work\go-wren-engine
 go mod init github.com/wren-engine/wren
-mkdir -p cmd/wren-server internal/parser/generated internal/parser/ast internal/parser/visitor internal/parser/formatter internal/dto internal/mdl internal/rewrite internal/analyzer/decisionpoint internal/connector/duckdb internal/connector/postgres internal/converter internal/config internal/service internal/server
+mkdir -p cmd/wren-engine internal/parser/generated internal/parser/ast internal/parser/visitor internal/parser/formatter internal/dto internal/mdl internal/rewrite internal/analyzer/decisionpoint internal/connector/duckdb internal/connector/postgres internal/converter internal/config internal/service internal/server
 ```
 
 - [ ] **Step 2: Create minimal main.go**
 
-Create `cmd/wren-server/main.go`:
+Create `cmd/wren-engine/main.go`:
 
 ```go
 package main
@@ -55,7 +55,7 @@ Create `Makefile`:
 .PHONY: build test clean generate
 
 build:
-	go build -o bin/wren-server ./cmd/wren-server
+	go build -o bin/wren-engine ./cmd/wren-engine
 
 test:
 	go test ./...
@@ -69,7 +69,7 @@ generate:
 
 - [ ] **Step 4: Verify it builds and runs**
 
-Run: `cd D:\workspace\kb_work\go-wren-engine && go build ./cmd/wren-server && ./wren-server`
+Run: `cd D:\workspace\kb_work\go-wren-engine && go build ./cmd/wren-engine && ./wren-engine`
 Expected: `wren-engine starting...`
 
 - [ ] **Step 5: Commit**
@@ -2191,7 +2191,7 @@ go get gopkg.in/yaml.v3
 - Create: `internal/server/analysis_handler.go`
 - Create: `internal/server/duckdb_handler.go`
 - Create: `internal/server/config_handler.go`
-- Update: `cmd/wren-server/main.go`
+- Update: `cmd/wren-engine/main.go`
 
 **Reference:** All resource files in `D:\workspace\kb_work\wren-engine-0.9.3\wren-main\src\main\java\io\wren\main\web\`
 

@@ -140,7 +140,7 @@ RUN go mod download
 # Build the binary with CGo enabled (required for go-duckdb static lib)
 COPY . .
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
-    go build -ldflags='-s -w' -o wren-server ./cmd/wren-server
+    go build -ldflags='-s -w' -o wren-engine ./cmd/wren-engine
 
 # ── Runtime stage ───────────────────────────────────────────────
 FROM debian:stable-slim
@@ -155,7 +155,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /usr/src/app
 
 # Copy binary and entrypoint
-COPY --from=builder /build/wren-server ./
+COPY --from=builder /build/wren-engine ./
 COPY docker/entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
@@ -163,7 +163,7 @@ RUN chmod +x entrypoint.sh
 # No USER directive — Java image runs as root
 
 # Pass-through heap args: $1=binary $2=maxHeap $3=minHeap
-CMD ["./entrypoint.sh", "wren-server", "512m", "64m"]
+CMD ["./entrypoint.sh", "wren-engine", "512m", "64m"]
 ```
 
 - [ ] **Step 3: Build to verify Dockerfile syntax**
@@ -198,7 +198,7 @@ set -euo pipefail
 # Usage: ./entrypoint.sh <binary> <maxHeap> <minHeap>
 # Mirrors Java image entrypoint argv convention.
 
-BINARY="${1:-wren-server}"
+BINARY="${1:-wren-engine}"
 MAX_HEAP="${2:-512m}"
 MIN_HEAP="${3:-64m}"
 
@@ -348,7 +348,7 @@ RUN go mod download
 
 COPY . .
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
-    go build -ldflags='-s -w' -o wren-server ./cmd/wren-server
+    go build -ldflags='-s -w' -o wren-engine ./cmd/wren-engine
 
 # ── Runtime stage ───────────────────────────────────────────────
 FROM debian:stable-slim
@@ -360,11 +360,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /usr/src/app
 
-COPY --from=builder /build/wren-server ./
+COPY --from=builder /build/wren-engine ./
 COPY docker/entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
-CMD ["./entrypoint.sh", "wren-server", "512m", "64m"]
+CMD ["./entrypoint.sh", "wren-engine", "512m", "64m"]
 ```
 
 - [ ] **Step 2: Verify root Dockerfile build**
@@ -632,14 +632,14 @@ docker run --rm go-wren-engine:phase1 sh -c 'which psql && psql --version'
 
 Expected: Prints path to `psql` and its version.
 
-- [ ] **Step 4: Verify `wren-server` binary exists and is executable**
+- [ ] **Step 4: Verify `wren-engine` binary exists and is executable**
 
 Run:
 ```bash
-docker run --rm go-wren-engine:phase1 sh -c 'ls -la wren-server && file wren-server'
+docker run --rm go-wren-engine:phase1 sh -c 'ls -la wren-engine && file wren-engine'
 ```
 
-Expected: Shows `wren-server` as an ELF 64-bit executable.
+Expected: Shows `wren-engine` as an ELF 64-bit executable.
 
 ---
 

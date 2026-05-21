@@ -9,7 +9,7 @@
 
 Wren Engine is a semantic SQL engine for LLMs. It accepts SQL queries combined with a Modeling Definition Language (MDL) manifest, semantically rewrites the SQL based on model/metric/view definitions, and executes the rewritten SQL against data sources (DuckDB, PostgreSQL).
 
-This document specifies a 100% Go rewrite of the core Java engine modules (trino-parser, wren-base, wren-main, wren-server), excluding the Python ibis-server and Rust wren-modeling-rs components.
+This document specifies a 100% Go rewrite of the core Java engine modules (trino-parser, wren-base, wren-main, wren-engine), excluding the Python ibis-server and Rust wren-modeling-rs components.
 
 ### Key Decisions
 
@@ -27,7 +27,7 @@ This document specifies a 100% Go rewrite of the core Java engine modules (trino
 ```
 go-wren-engine/
 ├── cmd/
-│   └── wren-server/              # Server entry point (main.go)
+│   └── wren-engine/              # Server entry point (main.go)
 ├── internal/
 │   ├── parser/                   # ANTLR4-generated Go parser + focused AST
 │   │   ├── generated/            # ANTLR4 Go output (lexer, parser, listener)

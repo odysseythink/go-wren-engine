@@ -70,14 +70,14 @@ git commit -m "fix: replace stale /tmp replace directives with resolvable deps"
 ## Task 2: 仓库清理与 Makefile 修正
 
 **Files:**
-- Delete: `wren-server`（仓库根目录的 17MB 编译产物）
+- Delete: `wren-engine`（仓库根目录的 17MB 编译产物）
 - Create: `.gitignore`
 - Modify: `Makefile`
 
 - [ ] **Step 1: 从 git 移除编译产物**
 
-Run: `git rm --cached wren-server && rm -f wren-server`
-Expected: `wren-server` 从索引移除。
+Run: `git rm --cached wren-engine && rm -f wren-engine`
+Expected: `wren-engine` 从索引移除。
 
 - [ ] **Step 2: 创建 .gitignore**
 
@@ -85,7 +85,7 @@ Create `.gitignore`:
 
 ```
 # 编译产物
-/wren-server
+/wren-engine
 /bin/
 *.test
 *.out
@@ -106,7 +106,7 @@ generate:
 - [ ] **Step 4: 验证 build/test 仍可用**
 
 Run: `make build`
-Expected: 生成 `bin/wren-server`，退出码 0。
+Expected: 生成 `bin/wren-engine`，退出码 0。
 
 Run: `make test`
 Expected: 与 Task 1 Step 4 一致。
@@ -1076,5 +1076,5 @@ git commit -m "feat: add differential test with baseline scoreboard"
 - `make capture-golden` 在装有 Docker 的机器上跑通，产出 TPC-H golden。
 - `make difftest` 离线通过：用例对照 baseline 无回归，计分板摘要正确。
 - 规范化器单测通过；防回归机制经 Task 10 Step 6 验证生效。
-- 仓库不再含 `wren-server` 二进制；`go.mod` 无 `/tmp` `replace`。
+- 仓库不再含 `wren-engine` 二进制；`go.mod` 无 `/tmp` `replace`。
 ```

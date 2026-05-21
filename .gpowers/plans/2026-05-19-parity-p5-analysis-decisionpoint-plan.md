@@ -1859,7 +1859,7 @@ git commit -m "feat(p5): DecisionPointAnalyzer top-level assembly (slice 4)"
 **Files:**
 - Modify: `internal/server/analysis_handler.go` (replace 80-line stub)
 - Create: `internal/server/analysis_handler_test.go`
-- Modify: `cmd/wren-server/main.go` (already wires `analysisHandler := server.NewAnalysisHandler(); analysisHandler.RegisterRoutes(srv.Router())` — no change needed)
+- Modify: `cmd/wren-engine/main.go` (already wires `analysisHandler := server.NewAnalysisHandler(); analysisHandler.RegisterRoutes(srv.Router())` — no change needed)
 
 **Critical fixes vs. earlier draft:**
 - **Routes are `r.Get(...)`, not `r.Post(...)`.** Java JAX-RS uses `@GET` + JSON body; existing `internal/server/analysis_handler.go` stub already uses `r.Get`; `cmd/capture-golden/main.go` already issues `http.MethodGet`. The capture-analysis-golden command in slice 0 step 7 also uses `client.Post` — **also fix to GET** (see slice 6 step 3).
@@ -2031,21 +2031,21 @@ Notes:
 - `WriteError` / `WrenError` already exist in `internal/server/errors.go` — reused as in the previous stub.
 - The handler's `Properties` map nil-safety fix lives in `ToDto()` (slice 6, risk #9). If `Properties` is nil on `ColumnAnalysis`, `ToDto` must replace with `map[string]string{}` to match Java's `{}` emission.
 
-Verify: `cmd/wren-server/main.go` line 32–33 already does `analysisHandler := server.NewAnalysisHandler(); analysisHandler.RegisterRoutes(srv.Router())` — no diff to that file.
+Verify: `cmd/wren-engine/main.go` line 32–33 already does `analysisHandler := server.NewAnalysisHandler(); analysisHandler.RegisterRoutes(srv.Router())` — no diff to that file.
 
 Run: `go build ./internal/server/`
 Expected: PASS
 
 - [ ] **Step 2: Verify wiring in `main.go`**
 
-`cmd/wren-server/main.go` already has (lines 32–33 of existing file):
+`cmd/wren-engine/main.go` already has (lines 32–33 of existing file):
 
 ```go
 analysisHandler := server.NewAnalysisHandler()
 analysisHandler.RegisterRoutes(srv.Router())
 ```
 
-No edit required. Run `go build ./cmd/wren-server/`; expected: PASS.
+No edit required. Run `go build ./cmd/wren-engine/`; expected: PASS.
 
 - [ ] **Step 3: Write endpoint test**
 
@@ -2100,7 +2100,7 @@ Expected: PASS
 
 ```bash
 git add internal/server/analysis_handler.go internal/server/analysis_handler_test.go
-git diff --name-only | grep cmd/wren-server && git add cmd/wren-server/main.go
+git diff --name-only | grep cmd/wren-engine && git add cmd/wren-engine/main.go
 git commit -m "feat(p5): HTTP analysis endpoints (slice 5)"
 ```
 

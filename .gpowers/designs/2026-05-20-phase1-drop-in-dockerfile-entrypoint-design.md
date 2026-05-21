@@ -21,7 +21,7 @@ drop-in 路线图共 5 阶段：
 |---|---|
 | `FROM golang:1.26-alpine` 编译 + `FROM alpine:latest` 运行 | go-duckdb v1.7.0 静态打包的 `libduckdb.a` 是 glibc-bound，alpine 的 musl 链接器会 fail；即使编出来跑也可能 segfault |
 | `WORKDIR /root/` | WrenAI bootstrap mount `data:/usr/src/app/etc`，Go 镜像 cwd 不在 `/usr/src/app` 则相对路径全错 |
-| `CMD ["./wren-server"]` 不接收 heap 参数 | Java entrypoint 通过 `$2/$3` 接收 `MAX_HEAP_SIZE/MIN_HEAP_SIZE`，docker-compose 透传；Go 镜像必须保持相同 argv 形态 |
+| `CMD ["./wren-engine"]` 不接收 heap 参数 | Java entrypoint 通过 `$2/$3` 接收 `MAX_HEAP_SIZE/MIN_HEAP_SIZE`，docker-compose 透传；Go 镜像必须保持相同 argv 形态 |
 | `docker-compose.yaml` mount `./etc/mdl:/app/etc/mdl` | 与 Java 镜像 `/usr/src/app/etc` 完全不兼容；WrenAI bootstrap 写 `${data_path}/config.properties` 到 `/usr/src/app/etc/config.properties`，Go 镜像 mount 路径不一致 |
 | 未安装 `postgresql-client-13` | Java 镜像安装这个包；如果有 sidecar 或运维脚本依赖 `psql` 可达，Go 镜像缺它就坏 |
 
@@ -59,15 +59,15 @@ drop-in 路线图共 5 阶段：
 docker build .                                 ← multi-stage
   ├─ builder: golang:1.26-bookworm (Debian)
   │    apt install build-essential
-  │    CGO_ENABLED=1 go build -ldflags='-s -w' -o wren-server ./cmd/wren-server
+  │    CGO_ENABLED=1 go build -ldflags='-s -w' -o wren-engine ./cmd/wren-engine
   │    → 产出静态链接 libduckdb 的 ~50-60 MB ELF (linux/amd64)
   │
   └─ runtime: debian:stable-slim
        apt install postgresql-client-13 ca-certificates  ← 维持 Java 镜像 parity
        WORKDIR /usr/src/app
-       COPY --from=builder /build/wren-server ./
+       COPY --from=builder /build/wren-engine ./
        COPY docker/entrypoint.sh ./
-       CMD ./entrypoint.sh wren-server ${MAX_HEAP_SIZE:-512m} ${MIN_HEAP_SIZE:-64m}
+       CMD ./entrypoint.sh wren-engine ${MAX_HEAP_SIZE:-512m} ${MIN_HEAP_SIZE:-64m}
 
 docker run -v ${data}:/usr/src/app/etc go-wren-engine
   └─ entrypoint.sh
@@ -75,7 +75,7 @@ docker run -v ${data}:/usr/src/app/etc go-wren-engine
        export WREN_CONFIG_FILE=/usr/src/app/etc/config.properties  ← Phase 2 才解析，
                                                                      Phase 1 仅设 env
        warn "Postgres wire protocol (7432) not supported by go-wren-engine" if [ "$WARN_DROP_IN_GAPS" != "0" ]
-       exec ./wren-server
+       exec ./wren-engine
 ```
 
 构建走多阶段：builder 用完整 Go + gcc，runtime 用裸 debian-slim + 必要包。
@@ -115,7 +115,7 @@ Java 用的是 eclipse-temurin（Debian-based）—— 选 `debian:stable-slim` 
 - maxHeap 解析：`512m → 512MiB`, `4g → 4GiB`，落到 `GOMEMLIMIT` env
 - minHeap 在 Go 下**不可表达**（无类似 -Xms 的初始 heap 概念）；entrypoint 打印 info-level 提示并忽略
 - 启动时 echo 一行 drop-in gap 提示：`[INFO] Postgres wire protocol (port 7432) not supported by this go-wren-engine build`，用户可设 `WARN_DROP_IN_GAPS=0` 静默
-- Dockerfile CMD 改为 `./entrypoint.sh wren-server ${MAX_HEAP_SIZE:-512m} ${MIN_HEAP_SIZE:-64m}`
+- Dockerfile CMD 改为 `./entrypoint.sh wren-engine ${MAX_HEAP_SIZE:-512m} ${MIN_HEAP_SIZE:-64m}`
 - 验证：`docker run --rm go-wren-engine:phase1` 不立即退出；`docker logs` 显示 binary 启动 + 端口监听
 - 验证：`docker run -e MAX_HEAP_SIZE=1g --rm go-wren-engine:phase1` 进程 env 含 `GOMEMLIMIT=1GiB`
 

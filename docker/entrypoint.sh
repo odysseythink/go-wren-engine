@@ -4,7 +4,7 @@ set -euo pipefail
 # Usage: ./entrypoint.sh <binary> <maxHeap> <minHeap>
 # Mirrors Java image entrypoint argv convention.
 
-BINARY="${1:-wren-server}"
+BINARY="${1:-wren-engine}"
 MAX_HEAP="${MAX_HEAP_SIZE:-${2:-512m}}"
 MIN_HEAP="${MIN_HEAP_SIZE:-${3:-64m}}"
 

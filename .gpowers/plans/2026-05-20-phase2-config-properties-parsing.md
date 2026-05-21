@@ -20,7 +20,7 @@
 | `internal/config/config_test.go` | **Create** | `Load/Sync` 往返、`Archive` 时间戳单调性、并发 race 测试 |
 | `internal/server/config_handler.go` | **Modify** | `Patch`/`DeleteAll` 加 `cm.Archive()` → `cm.SyncToFile()` → `fireReload` |
 | `internal/server/config_handler_test.go` | **Modify** | 端到端测试：临时文件 → PATCH → 校验磁盘内容 + archived 副本 |
-| `cmd/wren-server/main.go` | **Modify** | 启动序：`WREN_CONFIG_FILE` env → `LoadFromFile` → `LoadFromEnv`；缺失 fatal |
+| `cmd/wren-engine/main.go` | **Modify** | 启动序：`WREN_CONFIG_FILE` env → `LoadFromFile` → `LoadFromEnv`；缺失 fatal |
 | `docker/README.md` | **Modify** | 删除 "config.properties parsing not yet supported" 警告；添加 PATCH 注释丢失警示 |
 | `internal/difftest/config_diff_test.go` | **Verify** | 现有 12 IDs 应当 trivially pass（`NewConfigManager()` 路径不变） |
 
@@ -1167,7 +1167,7 @@ git commit -m "feat(config): add LoadFromFile, SyncToFile, Archive, OnChange
 **Files:**
 - Modify: `internal/server/config_handler.go`
 - Modify: `internal/server/config_handler_test.go`
-- Modify: `cmd/wren-server/main.go`
+- Modify: `cmd/wren-engine/main.go`
 
 - [ ] **Step 11:** Modify `internal/server/config_handler.go`
 
@@ -1416,7 +1416,7 @@ func TestConfigDelete_PersistsToDisk(t *testing.T) {
 }
 ```
 
-- [ ] **Step 13:** Modify `cmd/wren-server/main.go`
+- [ ] **Step 13:** Modify `cmd/wren-engine/main.go`
 
 ```go
 package main
@@ -1488,7 +1488,7 @@ Expected: all existing tests + 3 new tests PASS, no race warnings.
 - [ ] **Step 15:** Commit
 
 ```bash
-git add internal/server/config_handler.go internal/server/config_handler_test.go cmd/wren-server/main.go
+git add internal/server/config_handler.go internal/server/config_handler_test.go cmd/wren-engine/main.go
 git commit -m "feat(config): wire PATCH/DELETE persistence and startup fatal
 
 - config_handler.go.Patch: Archive -> SyncToFile -> FireReload on success;
@@ -1496,7 +1496,7 @@ git commit -m "feat(config): wire PATCH/DELETE persistence and startup fatal
 - config_handler.go.DeleteAll: same Archive + SyncToFile flow
 - config_handler_test.go: 3 e2e tests covering PATCH persists to disk,
   static key no-op skips archive, DELETE persists default to disk
-- cmd/wren-server/main.go: WREN_CONFIG_FILE required -> LoadFromFile fatal
+- cmd/wren-engine/main.go: WREN_CONFIG_FILE required -> LoadFromFile fatal
   if missing -> LoadFromEnv overlay"
 ```
 
@@ -1581,11 +1581,11 @@ go test ./internal/config/... ./internal/server/... -race
 go test ./internal/difftest/... -v
 
 # 3. Full build
-go build ./cmd/wren-server
+go build ./cmd/wren-engine
 
 # 4. Format check
 gofmt -d internal/config/config.go internal/config/properties.go \
-  internal/server/config_handler.go cmd/wren-server/main.go
+  internal/server/config_handler.go cmd/wren-engine/main.go
 
 # 5. Vet
 go vet ./...

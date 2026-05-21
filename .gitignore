@@ -1,5 +1,6 @@
 # 编译产物
 /wren-server
+/wren-engine
 /bin/
 *.test
 *.out

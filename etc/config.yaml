@@ -1,0 +1,42 @@
+# Wren Engine default configuration (YAML)
+# All keys match Java ConfigManager defaults.
+
+# Bootstrap-only: HTTP server port (not exposed via /v1/config)
+port: 8080
+
+wren:
+  # Directory containing MDL (Model Definition Language) files
+  directory: /usr/src/app/etc/mdl
+
+  datasource:
+    # Datasource type: DUCKDB (static, cannot be changed at runtime)
+    type: DUCKDB
+
+  # Enable experimental dynamic field generation
+  experimental-enable-dynamic-fields: false
+
+duckdb:
+  # Memory limit for DuckDB (static)
+  memory-limit: 268435456B
+
+  # Home directory for DuckDB (static)
+  home-directory: ""
+
+  # Temporary directory for DuckDB spilling (static)
+  temp-directory: /tmp/duck
+
+  # Max concurrent query tasks
+  max-concurrent-tasks: 10
+
+  # Max cache query timeout (seconds)
+  max-cache-query-timeout: 20
+
+  # Cache task retry delay (seconds)
+  cache-task-retry-delay: 60
+
+  connector:
+    # SQL executed once when DuckDB connection is created
+    init-sql-path: etc/duckdb/init.sql
+
+    # SQL executed at the start of every session
+    session-sql-path: etc/duckdb/session.sql

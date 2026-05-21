@@ -45,7 +45,7 @@
    - `golang.org/x/exp => /tmp/golang-exp`
    - `github.com/go-chi/chi/v5 => /tmp/chi-repo`
 2. 无 `go.sum`。
-3. 仓库根目录提交了 17MB 的编译产物 `wren-server`。
+3. 仓库根目录提交了 17MB 的编译产物 `wren-engine`。
 4. `Dockerfile` 执行 `COPY go.mod go.sum ./`，但 `go.sum` 不存在。
 5. `Makefile` 的 `generate` 目标硬编码本机 java 路径 `/opt/homebrew/Cellar/openjdk/25.0.2/bin/java`。
 6. 无 CI。
@@ -54,7 +54,7 @@
 
 - 删除 `go.mod` 中三条 `replace` 指令。`github.com/antlr4-go/antlr/v4` 锁到与代码生成器匹配的版本（`tools/antlr-4.13.2-complete.jar` → runtime `v4.13.x`）；`github.com/go-chi/chi/v5` 锁 `v5.2.5`；`golang.org/x/exp` 作为间接依赖交给 `go mod tidy` 解析。
 - 运行 `go mod tidy` 生成 `go.sum`。
-- 从 git 删除 `wren-server` 二进制；新增 `.gitignore`（忽略 `bin/`、`wren-server`、`*.test` 等编译产物）。
+- 从 git 删除 `wren-engine` 二进制；新增 `.gitignore`（忽略 `bin/`、`wren-engine`、`*.test` 等编译产物）。
 - `Makefile` 的 `generate` 目标改用 PATH 中的 `java`。
 - 新增 `.github/workflows/ci.yml`：在 push / PR 上依次执行 `go build ./...`、`go vet ./...`、`gofmt -l`（有未格式化文件即失败）、`go test ./...`。Go 版本用 `setup-go` 的 `go-version-file: go.mod`。
 
@@ -69,7 +69,7 @@
 - 干净 checkout（无 `/tmp/*` 目录、无预存 module 缓存假设）后，`make build` 与 `make test` 均成功。
 - `go vet ./...` 无报错；`gofmt -l` 输出为空。
 - CI 工作流在 PR 上跑绿。
-- 仓库中不再含 `wren-server` 二进制。
+- 仓库中不再含 `wren-engine` 二进制。
 
 ## 4. P1 — 差分测试框架（golden 快照）
 
@@ -217,7 +217,7 @@ golden 存**原始** Java 输出（不预先规范化），便于在 git diff �
 
 **P0**
 - 修复后的 `go.mod` / 新增 `go.sum`
-- `.gitignore`；从 git 移除 `wren-server` 二进制
+- `.gitignore`；从 git 移除 `wren-engine` 二进制
 - 修正 `Makefile` 的 `generate` 目标
 - `.github/workflows/ci.yml`
 

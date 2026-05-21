@@ -1204,7 +1204,7 @@ func (c *DuckDBSqlConverter) Convert(sqlText string, _ *analyzer.SessionContext)
 ```
 
 **Signature change**：`Convert` 从 `(string) string` 改为 `(string, ctx) (string, error)`，需更新调用方：
-- `cmd/wren-server/main.go`
+- `cmd/wren-engine/main.go`
 - `internal/service/preview.go`
 - `internal/difftest/duckdb_diff_test.go`（任务 4 已写为期望 `(string, error)`）
 
@@ -1222,7 +1222,7 @@ if err != nil {
 }
 ```
 
-`cmd/wren-server/main.go` 无变化（接口类型 `converter.SqlConverter` 已升级，赋值仍兼容）。
+`cmd/wren-engine/main.go` 无变化（接口类型 `converter.SqlConverter` 已升级，赋值仍兼容）。
 
 - [ ] **Step 5: 跑测试**
 
@@ -2660,7 +2660,7 @@ git commit -m "feat(p4): MDLResourceV2 base64 decode + MDL endpoint tests (slice
 - Edit: `internal/server/duckdb_handler.go`（settings 存储改走 metadata.Metadata）
 - Create: `internal/server/duckdb_handler_test.go`
 - Create: `testdata/difftest/cases/viewenum/init.sql`
-- Edit: `cmd/wren-server/main.go`
+- Edit: `cmd/wren-engine/main.go`
 
 - [ ] **Step 1: 改 `internal/server/duckdb_handler.go`：把全局变量 `initSQL`/`sessionSQL` 改走 Metadata**
 
@@ -2766,7 +2766,7 @@ func (h *DuckDBHandler) PatchSessionSQL(w http.ResponseWriter, r *http.Request) 
 }
 ```
 
-- [ ] **Step 2: 改 `cmd/wren-server/main.go` 注入 Metadata**
+- [ ] **Step 2: 改 `cmd/wren-engine/main.go` 注入 Metadata**
 
 ```go
 md := duckdb.NewMetadata()

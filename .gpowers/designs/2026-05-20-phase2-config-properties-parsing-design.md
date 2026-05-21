@@ -9,7 +9,7 @@
 
 Phase 1 让 docker 镜像能起来，但 Go 当前**完全忽略** mount 进来的 `etc/config.properties`：
 
-- `cmd/wren-server/main.go:14-16` 只调 `configMgr.LoadFromEnv()`，从不读文件
+- `cmd/wren-engine/main.go:14-16` 只调 `configMgr.LoadFromEnv()`，从不读文件
 - `internal/server/config_handler.go.Patch` 调用 `cm.Set(name, value)` **纯内存**改动；重启即丢
 - `DELETE /v1/config` 调 `cm.Reset()` 同样不写盘
 
@@ -39,7 +39,7 @@ Phase 2 闭合这三个行为差。
   - `sync.RWMutex` 包住 Set/Reset/All/Get 等并发路径
 - `internal/server/config_handler.go.Patch`：调用 `cm.Set` 成功后 → `cm.Archive()` → `cm.SyncToFile()` → 触发 reload hook
 - `internal/server/config_handler.go.DeleteAll`：reset 后同样 `Archive` + `SyncToFile`
-- `cmd/wren-server/main.go`：启动序——`LoadFromFile(env) → LoadFromEnv()`（env 优先）；file 缺失 → `os.Exit(1)` + 错误信息
+- `cmd/wren-engine/main.go`：启动序——`LoadFromFile(env) → LoadFromEnv()`（env 优先）；file 缺失 → `os.Exit(1)` + 错误信息
 - Reload 钩子：`ConfigManager.OnChange(keys []string, fn func())` 注册器，PATCH 触发已 reload-flag 的 key 时调用
 - 单元测试：properties 解析器（含转义边界）、Load/Sync 往返、Archive 时间戳唯一性
 - 差分测试：`baseline-config.json` 12 IDs 不破
@@ -169,7 +169,7 @@ Go `Archive`：
 | `internal/config/config_test.go` | 修改 | 加 LoadFromFile + Sync 往返 + Archive 测试 |
 | `internal/server/config_handler.go` | 修改 | Patch / DeleteAll 加 Archive + SyncToFile 调用 + reload hook |
 | `internal/server/config_handler_test.go` | 修改 | 加端到端测试：临时 file → PATCH → 校验 file 内容 + archived 副本 |
-| `cmd/wren-server/main.go` | 修改 | 启动序：env 取 `WREN_CONFIG_FILE` → LoadFromFile → fatal-if-missing |
+| `cmd/wren-engine/main.go` | 修改 | 启动序：env 取 `WREN_CONFIG_FILE` → LoadFromFile → fatal-if-missing |
 | `internal/difftest/config_diff_test.go` | 可能微调 | 现有 12 IDs 测的是 in-memory 默认；Phase 2 后改成 LoadFromFile-from-mock-file 路径，**核心断言不变** |
 
 ## 5. 实施切片（方案 C：增量切片）
@@ -202,7 +202,7 @@ Go `Archive`：
 
 - `config_handler.go.Patch`：调用 `Archive → SyncToFile → fireReload`
 - `config_handler.go.DeleteAll`：同样接线
-- `cmd/wren-server/main.go`：`os.Getenv("WREN_CONFIG_FILE") → LoadFromFile → log.Fatalf` if missing
+- `cmd/wren-engine/main.go`：`os.Getenv("WREN_CONFIG_FILE") → LoadFromFile → log.Fatalf` if missing
 - 启动失败信息：`Config file not found: <path>` （字符串 100% 匹配 Java `WrenException` message 减去 `WrenException` 前缀）
 - 端到端测试 (`config_handler_test.go`)：临时目录 + 临时 file → POST PATCH → 文件内容含新键 + archived/ 存原版
 
@@ -223,7 +223,7 @@ Go `Archive`：
 | 5 | **datasource.type 切换不可能** | Java 4 种 datasource 实现都 deprecated（只 DUCKDB 活），Go 仅实现 DUCKDB。Reload hook 即使调用也无事可做。OnChange 注册保留 API 但实现 NOOP；记入文档 |
 | 6 | **PATCH 中途 crash** | archive 成功 → SyncToFile 失败 → file 半写。POSIX `os.Rename`（实际写法：写 `.tmp` + atomic rename）做到 file 要么旧版要么新版，永不半写。crash 后 archived 还有最新备份，可手动 recover |
 | 7 | **PATCH 并发 race** | 多个 PATCH 请求同时改 file。`sync.RWMutex` + `Archive → SyncToFile` 在 lock 内串行化。Go `-race` 必须 clean |
-| 8 | **WREN_CONFIG_FILE env 未设** | Phase 1 entrypoint 已设；若用户直接 `go run cmd/wren-server` 启动会 fatal。本地开发应当 `export WREN_CONFIG_FILE=etc/config.properties`，README 说明 |
+| 8 | **WREN_CONFIG_FILE env 未设** | Phase 1 entrypoint 已设；若用户直接 `go run cmd/wren-engine` 启动会 fatal。本地开发应当 `export WREN_CONFIG_FILE=etc/config.properties`，README 说明 |
 | 9 | **node.environment 等 5 个非典型 key 解析正确性** | TPC-H example 含 `node.environment=production` 这类 airlift framework key，Go 必须**接受但不报错**。fileExtras 透传写回是关键 |
 | 10 | **行续 + 转义边界** | Java `loadPropertiesFrom` 走 airlift configuration loader 也是 wrap `java.util.Properties`，规则不简单。手写解析器**必须**单测 12+ 转义边界 |
 | 11 | **archive 目录权限** | mount 进来的 `etc/` 可能是只读，archive 子目录创建失败。`Archive()` 失败时**整个 PATCH 应当 abort**（Java 等价：throw IOException → 500），原子保持 |
@@ -243,7 +243,7 @@ Go `Archive`：
 
 ### 验收标准
 
-- ✅ `cmd/wren-server` 启动时 `WREN_CONFIG_FILE` env 未设 → 进程退出 1 + stderr 含 `WREN_CONFIG_FILE env required`
+- ✅ `cmd/wren-engine` 启动时 `WREN_CONFIG_FILE` env 未设 → 进程退出 1 + stderr 含 `WREN_CONFIG_FILE env required`
 - ✅ env 设但文件不存在 → 进程退出 1 + stderr 含 `Config file not found:`
 - ✅ 文件存在但非法（语法错）→ 进程退出 1 + stderr 含具体行号
 - ✅ 文件含 `wren.experimental-enable-dynamic-fields=false`，启动后 `GET /v1/config/wren.experimental-enable-dynamic-fields` 返回 `{"name":"...","value":"false"}`

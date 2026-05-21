@@ -16,7 +16,7 @@ RUN go mod download
 # Build the binary with CGo enabled (required for go-duckdb static lib)
 COPY . .
 RUN CGO_ENABLED=1 GOOS=linux \
-    go build -ldflags='-s -w' -o wren-server ./cmd/wren-server
+    go build -ldflags='-s -w' -o wren-engine ./cmd/wren-engine
 
 # ── Runtime stage ───────────────────────────────────────────────
 FROM debian:bookworm-slim
@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /usr/src/app
 
 # Copy binary and entrypoint
-COPY --from=builder /build/wren-server ./
+COPY --from=builder /build/wren-engine ./
 COPY --chmod=755 docker/entrypoint.sh ./
 
 # Java image does NOT declare EXPOSE; keep parity
@@ -39,4 +39,4 @@ COPY --chmod=755 docker/entrypoint.sh ./
 
 # Pass-through heap args: $1=binary $2=maxHeap $3=minHeap
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["wren-server", "512m", "64m"]
+CMD ["wren-engine", "512m", "64m"]

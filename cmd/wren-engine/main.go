@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -13,9 +14,15 @@ import (
 )
 
 func main() {
-	configPath := os.Getenv("WREN_CONFIG_FILE")
+	var configPath string
+	flag.StringVar(&configPath, "config", "", "config file path (properties or yaml)")
+	flag.Parse()
+
 	if configPath == "" {
-		log.Fatalf("WREN_CONFIG_FILE env required (Java parity: -Dconfig must be set)")
+		configPath = os.Getenv("WREN_CONFIG_FILE")
+	}
+	if configPath == "" {
+		log.Fatalf("--config or WREN_CONFIG_FILE env required")
 	}
 
 	configMgr := config.NewConfigManager()

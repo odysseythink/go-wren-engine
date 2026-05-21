@@ -1,7 +1,7 @@
 .PHONY: build test clean generate capture-golden difftest difftest-accept capture-format-golden format-golden format-accept capture-duckdb-golden duckdb-difftest duckdb-difftest-accept capture-envelope-golden envelope-difftest envelope-difftest-accept capture-analysis-golden analysis-difftest accept-analysis oracle-up oracle-down oracle-logs capture-all-golden rebaseline capture-dynamic-golden difftest-dynamic difftest-accept-dynamic
 
 build:
-	go build -o bin/wren-server ./cmd/wren-server
+	go build -o bin/wren-engine ./cmd/wren-engine
 
 test:
 	go test ./...

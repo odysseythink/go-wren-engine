@@ -7,7 +7,7 @@
 
 ## 1. 背景
 
-`ghcr.io/canner/wren-engine:0.9.3` 镜像是 DuckDB-only 的 Java `wren-server`。P1–P3 已覆盖
+`ghcr.io/canner/wren-engine:0.9.3` 镜像是 DuckDB-only 的 Java `wren-engine`。P1–P3 已覆盖
 「重写后 SQL 文本」这条链路（`/v1/mdl/dry-plan` + `modelingOnly=true`）。但镜像还要能**执行**
 查询返回数据 —— `/v1/mdl/preview`、`/v1/mdl/dry-run`、`/v1/data-source/duckdb/query`。P4 补这条链路。
 

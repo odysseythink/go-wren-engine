@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 
 	"sync"
 	"time"
@@ -48,7 +49,8 @@ type ConfigManager struct {
 	configs        map[string]string // mirrors Java configs map (11 typed keys)
 	static         map[string]bool   // mirrors Java staticConfigs set
 	fileExtras     map[string]string // all keys from file (11-key + non-11-key) for transparent write-back
-	filePath       string            // path to config.properties
+	filePath       string            // path to config file
+	fileFormat     string            // "properties" or "yaml"
 	requiredReload map[string]bool   // keys whose change triggers reload
 	reloadHooks    map[string][]func()
 }
@@ -207,7 +209,15 @@ func (cm *ConfigManager) LoadFromFile(path string) error {
 	}
 	defer f.Close()
 
-	props, err := parseProperties(f)
+	var props map[string]string
+	ext := strings.ToLower(filepath.Ext(path))
+	if ext == ".yaml" || ext == ".yml" {
+		props, err = parseYAML(f)
+		cm.fileFormat = "yaml"
+	} else {
+		props, err = parseProperties(f)
+		cm.fileFormat = "properties"
+	}
 	if err != nil {
 		return fmt.Errorf("parse config file: %w", err)
 	}
@@ -227,6 +237,7 @@ func (cm *ConfigManager) LoadFromFile(path string) error {
 func (cm *ConfigManager) SyncToFile() error {
 	cm.mu.RLock()
 	path := cm.filePath
+	format := cm.fileFormat
 	if path == "" {
 		cm.mu.RUnlock()
 		return fmt.Errorf("no config file path set")
@@ -250,11 +261,17 @@ func (cm *ConfigManager) SyncToFile() error {
 		return fmt.Errorf("create temp file: %w", err)
 	}
 
-	ts := time.Now().UTC().Format(time.RFC1123)
-	if err := writePropertiesWithTimestamp(f, props, "sync with file", ts); err != nil {
+	var writeErr error
+	if format == "yaml" {
+		writeErr = writeYAML(f, props)
+	} else {
+		ts := time.Now().UTC().Format(time.RFC1123)
+		writeErr = writePropertiesWithTimestamp(f, props, "sync with file", ts)
+	}
+	if writeErr != nil {
 		f.Close()
 		os.Remove(tmpPath)
-		return fmt.Errorf("write properties: %w", err)
+		return fmt.Errorf("write config: %w", writeErr)
 	}
 	if err := f.Close(); err != nil {
 		os.Remove(tmpPath)
