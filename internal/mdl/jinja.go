@@ -34,30 +34,45 @@ func RenderJinja(manifest *dto.Manifest) *dto.Manifest {
 var macroCallRegex = regexp.MustCompile(`\{\{\s*([A-Za-z_]\w*)\s*(?:\(([^)]*)\))?\s*\}\}`)
 
 func expandMacros(expression string, macros map[string]*dto.Macro) string {
-	return macroCallRegex.ReplaceAllStringFunc(expression, func(match string) string {
-		groups := macroCallRegex.FindStringSubmatch(match)
-		if groups == nil {
-			return match
-		}
-		macroName := groups[1]
-		argStr := groups[2]
-
-		macro, ok := macros[macroName]
-		if !ok {
-			return match // unknown macro left as-is (Java parity for unmatched tags)
-		}
-
-		body := macro.GetBody()
-		paramNames := macro.GetParameters()
-		args := parseArgs(argStr)
-
-		for i, name := range paramNames {
-			if i < len(args) {
-				body = strings.ReplaceAll(body, name, strings.TrimSpace(args[i]))
+	prev := ""
+	result := expression
+	for result != prev {
+		prev = result
+		result = macroCallRegex.ReplaceAllStringFunc(result, func(match string) string {
+			groups := macroCallRegex.FindStringSubmatch(match)
+			if groups == nil {
+				return match
 			}
-		}
-		return body
-	})
+			macroName := groups[1]
+			argStr := groups[2]
+
+			macro, ok := macros[macroName]
+			if !ok {
+				return match // unknown macro left as-is (Java parity for unmatched tags)
+			}
+
+			body := macro.GetBody()
+			paramNames := macro.GetParameters()
+			args := parseArgs(argStr)
+
+			for i, name := range paramNames {
+				if i < len(args) {
+					val := strings.TrimSpace(args[i])
+					// paramNames may include type annotations like "arg1: Expression"
+					if idx := strings.Index(name, ":"); idx != -1 {
+						name = strings.TrimSpace(name[:idx])
+					}
+					// Replace template variable references {{ name }}
+					varPattern := regexp.MustCompile(`\{\{\s*` + regexp.QuoteMeta(name) + `\s*\}\}`)
+					body = varPattern.ReplaceAllString(body, val)
+					// Also replace bare parameter names
+					body = strings.ReplaceAll(body, name, val)
+				}
+			}
+			return body
+		})
+	}
+	return result
 }
 
 func parseArgs(argStr string) []string {
