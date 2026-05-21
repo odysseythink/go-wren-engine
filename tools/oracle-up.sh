@@ -1,25 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE="${WREN_ORACLE_IMAGE:-ghcr.io/canner/wren-engine:0.9.3}"
-PORT="${WREN_ORACLE_PORT:-18080}"
-MOUNT_DIR="${WREN_ORACLE_MOUNT:-}"
-
-# Derive mount dir from sibling wren-engine-0.9.3 checkout if not set
-if [ -z "$MOUNT_DIR" ]; then
-    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    # Try relative to project root (tools/.. is project root)
-    CANDIDATE="$(cd "$SCRIPT_DIR/.." 2>/dev/null && cd ../wren-engine-0.9.3/example/duckdb-tpch-example/etc 2>/dev/null && pwd)" || true
-    if [ -n "$CANDIDATE" ] && [ -d "$CANDIDATE" ]; then
-        MOUNT_DIR="$CANDIDATE"
-    fi
+DYNAMIC=false
+if [ "${1:-}" = "--dynamic-fields=true" ]; then
+    DYNAMIC=true
 fi
 
-if [ -z "$MOUNT_DIR" ] || [ ! -d "$MOUNT_DIR" ]; then
-    echo "ERROR: oracle mount directory not found." >&2
-    echo "Please clone canner/wren-engine tag 0.9.3 into a sibling directory:" >&2
-    echo "  cd .. && git clone --branch 0.9.3 https://github.com/canner/wren-engine.git wren-engine-0.9.3" >&2
-    echo "Or set WREN_ORACLE_MOUNT to the path containing etc/config.properties." >&2
+IMAGE="${WREN_ORACLE_IMAGE:-ghcr.io/canner/wren-engine:0.9.3}"
+PORT="${WREN_ORACLE_PORT:-18080}"
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ "$DYNAMIC" = true ]; then
+    ETC_DIR="${SCRIPT_DIR}/oracle-etc-dynamic"
+else
+    ETC_DIR="${SCRIPT_DIR}/oracle-etc"
+fi
+
+if [ ! -d "$ETC_DIR" ]; then
+    echo "ERROR: oracle etc directory not found: $ETC_DIR" >&2
     exit 1
 fi
 
@@ -37,11 +35,11 @@ if ! docker pull "$IMAGE" 2>&1; then
     exit 1
 fi
 
-echo "Starting oracle container (name=wren-oracle, port=$PORT)..."
+echo "Starting oracle container (name=wren-oracle, port=$PORT, dynamic=$DYNAMIC)..."
 cid=$(docker run -d \
     --name wren-oracle \
     -p "${PORT}:8080" \
-    -v "${MOUNT_DIR}:/usr/src/app/etc:ro" \
+    -v "${ETC_DIR}:/usr/src/app/etc:ro" \
     -e MAX_HEAP_SIZE=2g \
     -e MIN_HEAP_SIZE=512m \
     "$IMAGE")
@@ -64,4 +62,4 @@ if [ -z "${ready}" ]; then
 fi
 
 count=$(curl -sf --max-time 5 "http://localhost:${PORT}/v1/config" | grep -o '"name"' | wc -l | tr -d ' ')
-echo "Oracle ready: http://localhost:${PORT} ($count config entries)"
+echo "Oracle ready: http://localhost:${PORT} ($count config entries, dynamic=$DYNAMIC)"

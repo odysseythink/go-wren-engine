@@ -1,4 +1,4 @@
-.PHONY: build test clean generate capture-golden difftest difftest-accept capture-format-golden format-golden format-accept capture-duckdb-golden duckdb-difftest duckdb-difftest-accept capture-envelope-golden envelope-difftest envelope-difftest-accept capture-analysis-golden analysis-difftest accept-analysis oracle-up oracle-down oracle-logs capture-all-golden rebaseline
+.PHONY: build test clean generate capture-golden difftest difftest-accept capture-format-golden format-golden format-accept capture-duckdb-golden duckdb-difftest duckdb-difftest-accept capture-envelope-golden envelope-difftest envelope-difftest-accept capture-analysis-golden analysis-difftest accept-analysis oracle-up oracle-down oracle-logs capture-all-golden rebaseline capture-dynamic-golden difftest-dynamic difftest-accept-dynamic
 
 build:
 	go build -o bin/wren-server ./cmd/wren-server
@@ -17,6 +17,17 @@ difftest:
 
 difftest-accept:
 	go test ./internal/difftest/... -run TestDifferential -difftest.accept
+
+# ── Dynamic mode targets ────────────────────────────────────────
+
+capture-dynamic-golden: oracle-up
+	go run ./cmd/capture-golden -addr http://localhost:18080 -out testdata/difftest/golden-dynamic
+
+difftest-dynamic:
+	go test ./internal/difftest/... -run TestDifferentialDynamic -v
+
+difftest-accept-dynamic:
+	go test ./internal/difftest/... -run TestDifferentialDynamic -difftest.accept-dynamic
 
 generate:
 	cd internal/parser/generated && java -jar ../../../tools/antlr-4.13.2-complete.jar -Dlanguage=Go -package generated SqlBase.g4
