@@ -40,6 +40,30 @@ func newModelSqlRender(model *dto.Model, wrenMDL *mdl.WrenMDL) (*modelSqlRender,
 	}, nil
 }
 
+// newModelSqlRenderWithFields creates a renderer that emits only the specified columns.
+func newModelSqlRenderWithFields(model *dto.Model, wrenMDL *mdl.WrenMDL, requiredFields []string) (*modelSqlRender, error) {
+	fields := make(map[string]bool, len(requiredFields))
+	for _, f := range requiredFields {
+		fields[f] = true
+	}
+	refSql, err := initRefSql(model)
+	if err != nil {
+		return nil, err
+	}
+	return &modelSqlRender{
+		relationableSqlRender: relationableSqlRender{
+			relationable:                        model,
+			mdl:                                 wrenMDL,
+			refSql:                              refSql,
+			requiredObjects:                     map[string]bool{},
+			selectItems:                         []string{},
+			calculatedRequiredRelationshipInfos: []*calculatedFieldRelationshipInfo{},
+			calculatedScopeSelectItems:          newOrderedMap(),
+		},
+		requiredFields: fields,
+	}, nil
+}
+
 func initRefSql(model *dto.Model) (string, error) {
 	if model.RefSql != "" {
 		return "(" + model.RefSql + ")", nil
@@ -69,6 +93,9 @@ func (r *modelSqlRender) render() (*RelationInfo, error) {
 	for i := range model.Columns {
 		col := &model.Columns[i]
 		if col.Relationship == "" && col.Expression == "" {
+			if !r.requiredFields[col.Name] {
+				continue
+			}
 			r.selectItems = append(r.selectItems, r.getSelectItemsExpression(col, ""))
 			r.calculatedScopeSelectItems.put(col.Name, fmt.Sprintf(`"%s"."%s"`, model.Name, col.Name))
 		}
@@ -286,7 +313,7 @@ func (r *modelSqlRender) getBaseModelSql(model *dto.Model) string {
 	var cols []string
 	for i := range model.Columns {
 		col := &model.Columns[i]
-		if !col.IsCalculated && col.Relationship == "" {
+		if !col.IsCalculated && col.Relationship == "" && r.requiredFields[col.Name] {
 			cols = append(cols, fmt.Sprintf("%s AS \"%s\"", col.GetExpression(), col.Name))
 		}
 	}

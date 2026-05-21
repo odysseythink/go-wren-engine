@@ -7,7 +7,6 @@ import (
 )
 
 // RelationInfo is a QueryDescriptor backed by a rendered model/metric query.
-// Mirrors Java RelationInfo.
 type RelationInfo struct {
 	name            string
 	requiredObjects []string
@@ -22,12 +21,31 @@ func (r *RelationInfo) Name() string              { return r.name }
 func (r *RelationInfo) RequiredObjects() []string { return r.requiredObjects }
 func (r *RelationInfo) Query() *ast.Query         { return r.query }
 
-// relationInfoOfModel renders a model into a RelationInfo. Mirrors
-// RelationInfo.get(Relationable, WrenMDL) for the Model case.
+// relationInfoOfModel renders a full model (static path).
 func relationInfoOfModel(model *dto.Model, wrenMDL *mdl.WrenMDL) (*RelationInfo, error) {
 	r, err := newModelSqlRender(model, wrenMDL)
 	if err != nil {
 		return nil, err
 	}
+	return r.render()
+}
+
+// relationInfoOfModelWithFields renders a pruned model selecting only requiredFields.
+func relationInfoOfModelWithFields(model *dto.Model, wrenMDL *mdl.WrenMDL, requiredFields []string) (*RelationInfo, error) {
+	r, err := newModelSqlRenderWithFields(model, wrenMDL, requiredFields)
+	if err != nil {
+		return nil, err
+	}
+	return r.render()
+}
+
+// relationInfoOfMetric renders a full metric (static path).
+func relationInfoOfMetric(metric *dto.Metric, wrenMDL *mdl.WrenMDL) (*RelationInfo, error) {
+	return newMetricSqlRender(metric, wrenMDL).render()
+}
+
+// relationInfoOfMetricWithFields renders a pruned metric selecting only requiredFields.
+func relationInfoOfMetricWithFields(metric *dto.Metric, wrenMDL *mdl.WrenMDL, requiredFields []string) (*RelationInfo, error) {
+	r := newMetricSqlRenderWithFields(metric, wrenMDL, requiredFields)
 	return r.render()
 }

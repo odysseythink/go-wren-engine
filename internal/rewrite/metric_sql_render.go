@@ -49,6 +49,26 @@ func newMetricSqlRender(metric *dto.Metric, wrenMDL *mdl.WrenMDL) *metricSqlRend
 	return r
 }
 
+// newMetricSqlRenderWithFields creates a renderer that emits only the specified columns.
+func newMetricSqlRenderWithFields(metric *dto.Metric, wrenMDL *mdl.WrenMDL, requiredFields []string) *metricSqlRender {
+	r := newMetricSqlRender(metric, wrenMDL)
+	r.requiredDims = make(map[string]bool)
+	r.requiredMeasures = make(map[string]bool)
+	for _, f := range requiredFields {
+		for _, d := range metric.Dimension {
+			if d.Name == f {
+				r.requiredDims[f] = true
+			}
+		}
+		for _, m := range metric.Measure {
+			if m.Name == f {
+				r.requiredMeasures[f] = true
+			}
+		}
+	}
+	return r
+}
+
 // initRefSql mirrors MetricSqlRender.initRefSql (:81-84).
 func (r *metricSqlRender) initRefSql() string {
 	return fmt.Sprintf(`SELECT * FROM "%s"`, r.relationable.BaseObject)
@@ -334,8 +354,3 @@ func (r *metricSqlRender) renderOnModel(baseModel *dto.Model) (*RelationInfo, er
 	return newRelationInfo(r.relationable.Name, sortedKeys(r.requiredObjects), query), nil
 }
 
-// relationInfoOfMetric renders a metric into a RelationInfo. Mirrors
-// RelationInfo.get(Relationable, WrenMDL) for the Metric case.
-func relationInfoOfMetric(metric *dto.Metric, wrenMDL *mdl.WrenMDL) (*RelationInfo, error) {
-	return newMetricSqlRender(metric, wrenMDL).render()
-}
