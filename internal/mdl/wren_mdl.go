@@ -23,6 +23,7 @@ type WrenMDL struct {
 
 // WrenMDLFromManifest creates a WrenMDL from a Manifest.
 func WrenMDLFromManifest(manifest *dto.Manifest) *WrenMDL {
+	manifest = RenderJinja(manifest)
 	m := &WrenMDL{
 		catalog:           manifest.Catalog,
 		schema:            manifest.Schema,
