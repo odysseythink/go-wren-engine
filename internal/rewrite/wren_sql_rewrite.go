@@ -11,12 +11,6 @@ import (
 	base "github.com/wren-engine/wren/internal/analyzer"
 )
 
-func init() {
-	mdl.SetLineageAnalyzer(func(w *mdl.WrenMDL) (interface{}, error) {
-		return lineage.Analyze(w)
-	})
-}
-
 type WrenSqlRewrite struct{}
 
 // Apply expands referenced Wren models into CTEs.
@@ -29,13 +23,13 @@ func (r *WrenSqlRewrite) Apply(root ast.Statement, ctx *base.SessionContext, ana
 	}
 
 	if ctx.EnableDynamicFields {
-		return r.applyDynamic(root, analyzedMDL, analysis)
+		return r.applyDynamic(root, ctx, analyzedMDL, analysis)
 	}
-	return r.applyStatic(root, analyzedMDL, analysis)
+	return r.applyStatic(root, ctx, analyzedMDL, analysis)
 }
 
 // applyStatic is the existing non-dynamic path (unchanged from Phase 4).
-func (r *WrenSqlRewrite) applyStatic(root ast.Statement, analyzedMDL *mdl.AnalyzedMDL, analysis *analyzer.Analysis) (ast.Statement, error) {
+func (r *WrenSqlRewrite) applyStatic(root ast.Statement, ctx *base.SessionContext, analyzedMDL *mdl.AnalyzedMDL, analysis *analyzer.Analysis) (ast.Statement, error) {
 	wrenMDL := analyzedMDL.WrenMDL()
 
 	var allDescriptors []QueryDescriptor
@@ -83,7 +77,7 @@ func (r *WrenSqlRewrite) applyStatic(root ast.Statement, analyzedMDL *mdl.Analyz
 				continue
 			}
 			seen[req] = true
-			reqDesc, err := QueryDescriptorOf(req, analyzedMDL, nil)
+			reqDesc, err := QueryDescriptorOf(req, analyzedMDL, ctx)
 			if err != nil {
 				return err
 			}
@@ -118,13 +112,12 @@ func (r *WrenSqlRewrite) applyStatic(root ast.Statement, analyzedMDL *mdl.Analyz
 }
 
 // applyDynamic is the new dynamic-field path.
-func (r *WrenSqlRewrite) applyDynamic(root ast.Statement, analyzedMDL *mdl.AnalyzedMDL, analysis *analyzer.Analysis) (ast.Statement, error) {
+func (r *WrenSqlRewrite) applyDynamic(root ast.Statement, ctx *base.SessionContext, analyzedMDL *mdl.AnalyzedMDL, analysis *analyzer.Analysis) (ast.Statement, error) {
 	wrenMDL := analyzedMDL.WrenMDL()
-	linIface, err := analyzedMDL.DataLineage()
+	lin, err := lineage.Analyze(wrenMDL)
 	if err != nil {
 		return nil, fmt.Errorf("lineage: %w", err)
 	}
-	lin := linIface.(*lineage.Lineage)
 
 	// Build visitedTables set from analysis.Tables (skip views).
 	visitedTables := map[string]bool{}

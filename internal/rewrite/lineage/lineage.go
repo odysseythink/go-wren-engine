@@ -18,12 +18,6 @@ type QualifiedName struct {
 
 func (q QualifiedName) String() string { return q.Table + "." + q.Column }
 
-// Vertex represents one table and the columns required from it.
-type Vertex struct {
-	Name        string
-	ColumnNames map[string]bool
-}
-
 // TableFields is an ordered entry returned by RequiredFields.
 type TableFields struct {
 	Name   string
