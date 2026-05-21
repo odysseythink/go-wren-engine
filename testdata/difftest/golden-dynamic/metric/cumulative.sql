@@ -1,0 +1,74 @@
+WITH
+  "date_spine" AS (
+   SELECT *
+   FROM
+     UNNEST(GENERATE_TIMESTAMP_ARRAY(TIMESTAMP '1970-01-01', TIMESTAMP '2077-12-31', INTERVAL  '1' DAY)) t (metric_time)
+) 
+, "Orders" AS (
+   SELECT
+     "Orders"."orderkey" "orderkey"
+   , "Orders"."custkey" "custkey"
+   , "Orders"."totalprice" "totalprice"
+   , "Orders"."orderdate" "orderdate"
+   FROM
+     (
+      SELECT
+        "Orders"."orderkey" "orderkey"
+      , "Orders"."custkey" "custkey"
+      , "Orders"."totalprice" "totalprice"
+      , "Orders"."orderdate" "orderdate"
+      FROM
+        (
+         SELECT
+           o_orderkey "orderkey"
+         , o_custkey "custkey"
+         , o_totalprice "totalprice"
+         , o_orderdate "orderdate"
+         FROM
+           (
+            SELECT *
+            FROM
+              orders
+         )  "Orders"
+      )  "Orders"
+   )  "Orders"
+) 
+, "WeeklyRevenue" AS (
+   SELECT
+     metric_time orderdate
+   , sum(DISTINCT measure_field) totalprice
+   FROM
+     (
+      SELECT
+        date_trunc('WEEK', d.metric_time) metric_time
+      , measure_field
+      FROM
+        (
+         SELECT CAST(metric_time AS date) metric_time
+         FROM
+           "date_spine"
+      )  d
+      LEFT JOIN (
+         SELECT
+           measure_field
+         , metric_time
+         FROM
+           (
+            SELECT
+              totalprice measure_field
+            , orderdate metric_time
+            FROM
+              Orders
+         )  sub1
+         WHERE ((metric_time >= CAST('1994-01-01' AS date)) AND (metric_time <= CAST('1994-12-31' AS date)))
+      )  sub2 ON ((sub2.metric_time <= d.metric_time) AND (sub2.metric_time > (d.metric_time - INTERVAL  '7' DAY)))
+      WHERE ((d.metric_time >= CAST('1994-01-01' AS date)) AND (d.metric_time <= CAST('1994-12-31' AS date)))
+   )  sub3
+   GROUP BY 1
+   ORDER BY 1 ASC
+) 
+SELECT
+  orderdate
+, totalprice
+FROM
+  WeeklyRevenue

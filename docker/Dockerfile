@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # ── Builder stage ───────────────────────────────────────────────
 FROM golang:1.26-bookworm AS builder
 
