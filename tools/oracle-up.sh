@@ -8,7 +8,8 @@ MOUNT_DIR="${WREN_ORACLE_MOUNT:-}"
 # Derive mount dir from sibling wren-engine-0.9.3 checkout if not set
 if [ -z "$MOUNT_DIR" ]; then
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    CANDIDATE="$(cd "$SCRIPT_DIR/../wren-engine-0.9.3/example/duckdb-tpch-example/etc" 2>/dev/null && pwd)" || true
+    # Try relative to project root (tools/.. is project root)
+    CANDIDATE="$(cd "$SCRIPT_DIR/.." 2>/dev/null && cd ../wren-engine-0.9.3/example/duckdb-tpch-example/etc 2>/dev/null && pwd)" || true
     if [ -n "$CANDIDATE" ] && [ -d "$CANDIDATE" ]; then
         MOUNT_DIR="$CANDIDATE"
     fi
