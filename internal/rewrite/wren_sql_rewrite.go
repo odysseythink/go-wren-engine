@@ -6,14 +6,20 @@ import (
 	"github.com/wren-engine/wren/internal/mdl"
 	"github.com/wren-engine/wren/internal/parser/ast"
 	"github.com/wren-engine/wren/internal/rewrite/analyzer"
+	"github.com/wren-engine/wren/internal/rewrite/lineage"
 
 	base "github.com/wren-engine/wren/internal/analyzer"
 )
 
+func init() {
+	mdl.SetLineageAnalyzer(func(w *mdl.WrenMDL) (interface{}, error) {
+		return lineage.Analyze(w)
+	})
+}
+
 type WrenSqlRewrite struct{}
 
-// Apply expands referenced Wren models into CTEs (non-dynamic-field path).
-// Mirrors Java WrenSqlRewrite.apply.
+// Apply expands referenced Wren models into CTEs.
 func (r *WrenSqlRewrite) Apply(root ast.Statement, ctx *base.SessionContext, analyzedMDL *mdl.AnalyzedMDL) (ast.Statement, error) {
 	wrenMDL := analyzedMDL.WrenMDL()
 
@@ -22,7 +28,16 @@ func (r *WrenSqlRewrite) Apply(root ast.Statement, ctx *base.SessionContext, ana
 		return nil, err
 	}
 
-	// non-dynamic path: model + metric + cumulative descriptors
+	if ctx.EnableDynamicFields {
+		return r.applyDynamic(root, analyzedMDL, analysis)
+	}
+	return r.applyStatic(root, analyzedMDL, analysis)
+}
+
+// applyStatic is the existing non-dynamic path (unchanged from Phase 4).
+func (r *WrenSqlRewrite) applyStatic(root ast.Statement, analyzedMDL *mdl.AnalyzedMDL, analysis *analyzer.Analysis) (ast.Statement, error) {
+	wrenMDL := analyzedMDL.WrenMDL()
+
 	var allDescriptors []QueryDescriptor
 	for _, model := range analysis.Models() {
 		info, err := relationInfoOfModel(model, wrenMDL)
@@ -68,7 +83,7 @@ func (r *WrenSqlRewrite) Apply(root ast.Statement, ctx *base.SessionContext, ana
 				continue
 			}
 			seen[req] = true
-			reqDesc, err := QueryDescriptorOf(req, analyzedMDL, ctx)
+			reqDesc, err := QueryDescriptorOf(req, analyzedMDL, nil)
 			if err != nil {
 				return err
 			}
@@ -102,8 +117,130 @@ func (r *WrenSqlRewrite) Apply(root ast.Statement, ctx *base.SessionContext, ana
 	return rewriteModelTables(rewriteWith, wrenMDL, analysis).(ast.Statement), nil
 }
 
-// rewriteModelTables rewrites in-MDL table references to their CTE name and
-// strips catalog/schema prefixes. Mirrors WrenSqlRewrite.Rewriter.
+// applyDynamic is the new dynamic-field path.
+func (r *WrenSqlRewrite) applyDynamic(root ast.Statement, analyzedMDL *mdl.AnalyzedMDL, analysis *analyzer.Analysis) (ast.Statement, error) {
+	wrenMDL := analyzedMDL.WrenMDL()
+	linIface, err := analyzedMDL.DataLineage()
+	if err != nil {
+		return nil, fmt.Errorf("lineage: %w", err)
+	}
+	lin := linIface.(*lineage.Lineage)
+
+	// Build visitedTables set from analysis.Tables (skip views).
+	visitedTables := map[string]bool{}
+	for _, t := range analysis.Tables() {
+		if _, ok := wrenMDL.GetView(t.Table); ok {
+			continue
+		}
+		visitedTables[t.Table] = true
+	}
+
+	// Convert collectedColumns to QualifiedName slice.
+	var requiredCols []lineage.QualifiedName
+	for cstn, cols := range analysis.CollectedColumns() {
+		for colName := range cols {
+			requiredCols = append(requiredCols, lineage.QualifiedName{
+				Table:  cstn.Table,
+				Column: colName,
+			})
+		}
+	}
+
+	// Get lineage-required fields.
+	tableRequiredFields, err := lin.RequiredFields(requiredCols)
+	if err != nil {
+		return nil, err
+	}
+
+	// count(*) fallback: add non-calc columns for required source nodes not yet covered.
+	for _, source := range analysis.RequiredSourceNodes() {
+		srcName, ok := analysis.SourceNodeName(source)
+		if !ok || len(srcName.Parts) == 0 {
+			continue
+		}
+		tableName := srcName.Parts[len(srcName.Parts)-1]
+		found := false
+		for _, tf := range tableRequiredFields {
+			if tf.Name == tableName {
+				found = true
+				break
+			}
+		}
+		if found {
+			continue
+		}
+		if model, ok := wrenMDL.GetModel(tableName); ok {
+			var cols []string
+			for _, c := range model.Columns {
+				if !c.IsCalculated && c.Relationship == "" {
+					cols = append(cols, c.Name)
+				}
+			}
+			tableRequiredFields = append(tableRequiredFields, lineage.TableFields{Name: tableName, Fields: cols})
+		} else if metric, ok := wrenMDL.GetMetric(tableName); ok {
+			var cols []string
+			for _, c := range metric.GetColumns() {
+				cols = append(cols, c.Name)
+			}
+			tableRequiredFields = append(tableRequiredFields, lineage.TableFields{Name: tableName, Fields: cols})
+		}
+	}
+
+	// Build pruned descriptors.
+	var descriptors []QueryDescriptor
+	for _, tf := range tableRequiredFields {
+		delete(visitedTables, tf.Name)
+		if model, ok := wrenMDL.GetModel(tf.Name); ok {
+			info, err := relationInfoOfModelWithFields(model, wrenMDL, tf.Fields)
+			if err != nil {
+				return nil, err
+			}
+			descriptors = append(descriptors, info)
+		} else if metric, ok := wrenMDL.GetMetric(tf.Name); ok {
+			info, err := relationInfoOfMetricWithFields(metric, wrenMDL, tf.Fields)
+			if err != nil {
+				return nil, err
+			}
+			descriptors = append(descriptors, info)
+		} else if cm, ok := wrenMDL.GetCumulativeMetric(tf.Name); ok {
+			info, err := cumulativeMetricInfoGet(cm, wrenMDL)
+			if err != nil {
+				return nil, err
+			}
+			descriptors = append(descriptors, info)
+		}
+	}
+
+	// CTE orchestration.
+	var withQueries []ast.WithQuery
+	hasCumulative := false
+	for _, tf := range tableRequiredFields {
+		if _, ok := wrenMDL.GetCumulativeMetric(tf.Name); ok {
+			hasCumulative = true
+			break
+		}
+	}
+	if hasCumulative {
+		ds, err := dateSpineInfoGet(wrenMDL.GetDateSpine())
+		if err != nil {
+			return nil, err
+		}
+		withQueries = append(withQueries, getWithQuery(ds))
+	}
+	for _, d := range descriptors {
+		withQueries = append(withQueries, getWithQuery(d))
+	}
+	for name := range visitedTables {
+		if wrenMDL.IsObjectExist(name) {
+			withQueries = append(withQueries, getWithQuery(&DummyInfo{name: name}))
+		}
+	}
+
+	rewriteWith := applyWith(root, withQueries)
+	return rewriteModelTables(rewriteWith, wrenMDL, analysis).(ast.Statement), nil
+}
+
+// rewriteModelTables rewrites in-MDL table references to their CTE name.
 func rewriteModelTables(node ast.Node, wrenMDL *mdl.WrenMDL, analysis *analyzer.Analysis) ast.Node {
 	return RewriteNode(node, func(n ast.Node) (ast.Node, bool) {
 		switch x := n.(type) {
@@ -123,8 +260,6 @@ func rewriteModelTables(node ast.Node, wrenMDL *mdl.WrenMDL, analysis *analyzer.
 	})
 }
 
-// stripCatalogSchema removes a leading catalog.schema (or schema) prefix from a
-// dereference. Mirrors Rewriter.visitDereferenceExpression.
 func stripCatalogSchema(d *ast.DereferenceExpression, wrenMDL *mdl.WrenMDL) ast.Expression {
 	qn := ast.GetQualifiedName(d)
 	if qn == nil || wrenMDL.Catalog() == "" || wrenMDL.Schema() == "" {

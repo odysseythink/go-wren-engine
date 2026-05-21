@@ -168,6 +168,11 @@ func (a *Analysis) RequiredSourceNode(n ast.Node) (ast.Node, bool) {
 	return s, ok
 }
 
+// RequiredSourceNodes returns the full required-source-node map.
+func (a *Analysis) RequiredSourceNodes() map[ast.NodeRef]ast.Node {
+	return a.requiredSourceNodes
+}
+
 // AddMetricRollups registers a roll_up node's info, keyed by node identity.
 // Mirrors Analysis.addMetricRollups.
 func (a *Analysis) AddMetricRollups(n ast.Node, info *MetricRollupInfo) {
